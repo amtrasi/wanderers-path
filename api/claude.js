@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -24,10 +24,9 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    // Return full error details if not ok
     if (!response.ok) {
-      return res.status(response.status).json({ 
-        error: data, 
+      return res.status(response.status).json({
+        error: data,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
         keyPrefix: process.env.ANTHROPIC_API_KEY?.slice(0,10)
       });
