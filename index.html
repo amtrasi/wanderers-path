@@ -609,7 +609,7 @@ location = exactly one of the 5 options. 2-3 warm lines. encounter: hpChange -2 
 
 async function callClaude(action){
   S.hist.push({role:'user',content:`State:${JSON.stringify({hp:S.hp,maxHp:S.maxHp,xp:S.xp,gold:S.gold,inv:S.inv,scene:S.scene})}\nAction:${action}`});
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:SYS,messages:S.hist})});
+  const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:SYS,messages:S.hist})});
   if(!r.ok)throw new Error('API '+r.status);
   const data=await r.json();
   const raw=data.content.map(b=>b.text||'').join('');
