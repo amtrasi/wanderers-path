@@ -24,7 +24,15 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    return res.status(response.status).json(data);
+    // Return full error details if not ok
+    if (!response.ok) {
+      return res.status(response.status).json({ 
+        error: data, 
+        keyPresent: !!process.env.ANTHROPIC_API_KEY,
+        keyPrefix: process.env.ANTHROPIC_API_KEY?.slice(0,10)
+      });
+    }
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
