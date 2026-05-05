@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Wanderer's Path</title>
-  <link rel="icon" href="favicon.ico">
-  <style>
+<link rel="icon" href="favicon.ico">
+<style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:#1a1208;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;padding:8px;}
@@ -69,257 +69,93 @@
 // ── Constants ──────────────────────────────────────────────────────────
 const PW=320, PH=180;
 
-// ── Game state ─────────────────────────────────────────────────────────
-const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],hist:[],scene:'village'};
-
-// ── Ambient scene audio ────────────────────────────────────────────────
+// ── Ambient audio ──────────────────────────────────────────────────────
 const AMBIENT_URLS={
-  village: 'https://amtrasi.github.io/wanderers-path/audio/580150__dan_audiofile__birmingham-open-air-market.wav',
-  river:   'https://amtrasi.github.io/wanderers-path/audio/222752__minian89__babbling_brook_loop.wav',
-  tavern:  'https://amtrasi.github.io/wanderers-path/audio/695295__brunoboselli__pirate-tavern.wav',
-  forest:  'https://amtrasi.github.io/wanderers-path/audio/427400__imjeax__forest-ambient-loop.wav',
-  meadow:  'https://amtrasi.github.io/wanderers-path/audio/752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav',
+  village:'https://amtrasi.github.io/wanderers-path/audio/580150__dan_audiofile__birmingham-open-air-market.wav',
+  river:  'https://amtrasi.github.io/wanderers-path/audio/222752__minian89__babbling_brook_loop.wav',
+  tavern: 'https://amtrasi.github.io/wanderers-path/audio/695295__brunoboselli__pirate-tavern.wav',
+  forest: 'https://amtrasi.github.io/wanderers-path/audio/427400__imjeax__forest-ambient-loop.wav',
+  meadow: 'https://amtrasi.github.io/wanderers-path/audio/752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav',
 };
-
-let ambientAudio=null, ambientScene=null;
-let footstepAudio=null;
+let ambientAudio=null, ambientScene=null, footstepAudio=null;
 
 function playAmbient(scene){
   if(ambientScene===scene) return;
-  const url=AMBIENT_URLS[scene];
-  if(!url) return;
-  if(ambientAudio){
-    const old=ambientAudio;
-    fadeAudio(old, old.volume, 0, 1200, ()=>{ old.pause(); old.src=''; });
-  }
-  const a=new Audio(url);
-  a.loop=true; a.volume=0;
-  a.play().catch(()=>{});
-  fadeAudio(a, 0, 0.35, 1200);
-  ambientAudio=a; ambientScene=scene;
+  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,1200,()=>{o.pause();o.src='';});}
+  const a=new Audio(AMBIENT_URLS[scene]||AMBIENT_URLS.village);
+  a.loop=true;a.volume=0;a.play().catch(()=>{});
+  fadeAudio(a,0,0.35,1200);
+  ambientAudio=a;ambientScene=scene;
 }
-
-function fadeAudio(audio, from, to, duration, onDone){
-  const steps=40, interval=duration/steps, delta=(to-from)/steps;
-  let v=from, n=0;
-  const iv=setInterval(()=>{
-    v+=delta; n++;
-    audio.volume=Math.max(0,Math.min(1,v));
-    if(n>=steps){ clearInterval(iv); if(onDone) onDone(); }
-  }, interval);
+function fadeAudio(audio,from,to,dur,onDone){
+  const steps=40,iv=dur/steps,delta=(to-from)/steps;
+  let v=from,n=0;
+  const t=setInterval(()=>{v+=delta;n++;audio.volume=Math.max(0,Math.min(1,v));if(n>=steps){clearInterval(t);if(onDone)onDone();}},iv);
 }
-
-function stopAmbient(){
-  if(ambientAudio){
-    const old=ambientAudio;
-    fadeAudio(old, old.volume, 0, 800, ()=>{ old.pause(); old.src=''; });
-    ambientAudio=null; ambientScene=null;
-  }
-}
-
 function startFootsteps(){
-  if(footstepAudio) return;
+  if(footstepAudio)return;
   footstepAudio=new Audio('https://amtrasi.github.io/wanderers-path/audio/816019__qubodup__fps-footsteps-loop.wav');
-  footstepAudio.loop=true; footstepAudio.volume=0.5;
-  footstepAudio.play().catch(()=>{});
+  footstepAudio.loop=true;footstepAudio.volume=0.5;footstepAudio.play().catch(()=>{});
 }
-
 function stopFootsteps(){
-  if(footstepAudio){ footstepAudio.pause(); footstepAudio.currentTime=0; footstepAudio=null; }
+  if(footstepAudio){footstepAudio.pause();footstepAudio.currentTime=0;footstepAudio=null;}
 }
 
 // ── Character animation ────────────────────────────────────────────────
-let charX=160, charState='idle', charDir=1;
-let pendingScene=null, pendingCallback=null;
+let charX=160,charState='idle',charDir=1;
+let pendingScene=null,pendingCallback=null;
 
-function animateWalkOut(newScene, cb){
-  pendingScene=newScene; pendingCallback=cb;
-  charState='walkout'; charDir=1;
-  playAmbient(newScene);
+function animateWalkOut(newScene,cb){
+  pendingScene=newScene;pendingCallback=cb;
+  charState='walkout';charDir=1;
+  playAmbient(newScene);startFootsteps();
 }
-
 function tickChar(){
-  if(charState==='walkout'){
-    charX+=2;
-    if(charX>PW+20){
-      S.scene=pendingScene;
-      charX=-20; charDir=1;
-      charState='walkin';
-    }
-  } else if(charState==='walkin'){
-    charX+=2;
-    if(charX>=PW/2){
-      charX=PW/2; charState='idle';
-      stopFootsteps();
-      if(pendingCallback){pendingCallback();pendingCallback=null;}
-    }
-  }
+  if(charState==='walkout'){charX+=2;if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}}
+  else if(charState==='walkin'){charX+=2;if(charX>=PW/2){charX=PW/2;charState='idle';stopFootsteps();if(pendingCallback){pendingCallback();pendingCallback=null;}}}
 }
 
 // ── Canvas ─────────────────────────────────────────────────────────────
-const cv=document.getElementById('scene'), cx=cv.getContext('2d');
+const cv=document.getElementById('scene'),cx=cv.getContext('2d');
 cx.imageSmoothingEnabled=false;
 let af=0;
 
 function resizeCanvas(){
-  const wrap=document.getElementById('scene-wrap');
-  cv.width=PW; cv.height=PH;
-  cv.style.width=wrap.clientWidth+'px';
-  cv.style.height=Math.round(wrap.clientWidth*(PH/PW))+'px';
+  const w=document.getElementById('scene-wrap').clientWidth||780;
+  cv.width=PW;cv.height=PH;
+  cv.style.width=w+'px';cv.style.height=Math.round(w*(PH/PW))+'px';
 }
 
 // ── Audio ──────────────────────────────────────────────────────────────
 let actx=null;
 function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
-function tn(freq,dur,delay=0,vol=0.06,type='sine'){
-  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
-  o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;
-  const t=ctx.currentTime+delay;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);
-  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-  o.start(t);o.stop(t+dur+0.05);}catch(e){}
-}
+function tn(freq,dur,delay=0,vol=0.06,type='sine'){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;const t=ctx.currentTime+delay;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur+0.05);}catch(e){}}
 function sndPickup(){[523,659,784].forEach((f,i)=>tn(f,0.18,i*0.1));}
 function sndCoin(){tn(880,0.1);tn(1100,0.1,0.08);}
 function sndHeal(){tn(528,0.35,0,0.05);}
 function sndBump(){tn(220,0.12,0,0.05,'square');tn(180,0.14,0.09,0.04,'square');}
-
-// Meow — soft, cat-like
-function sndMeow(){
-  try{const ctx=ac();
-  const o=ctx.createOscillator(),g=ctx.createGain();
-  o.connect(g);g.connect(ctx.destination);
-  o.type='sine';
-  o.frequency.setValueAtTime(600,ctx.currentTime);
-  o.frequency.linearRampToValueAtTime(900,ctx.currentTime+0.08);
-  o.frequency.linearRampToValueAtTime(650,ctx.currentTime+0.2);
-  o.frequency.linearRampToValueAtTime(500,ctx.currentTime+0.35);
-  g.gain.setValueAtTime(0,ctx.currentTime);
-  g.gain.linearRampToValueAtTime(0.09,ctx.currentTime+0.05);
-  g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.38);
-  o.start();o.stop(ctx.currentTime+0.4);}catch(e){}
-}
-
-// Bird chirp — two quick ascending tones
-function sndBird(){
-  [[0,900,1100],[0.15,1000,1300]].forEach(([delay,f1,f2])=>{
-    try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);o.type='sine';
-    const t=ctx.currentTime+delay;
-    o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+0.08);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-    o.start(t);o.stop(t+0.12);}catch(e){}
-  });
-}
-
-// Dog woof — low bark
-function sndWoof(){
-  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-  o.connect(f);f.connect(g);g.connect(ctx.destination);
-  o.type='sawtooth';f.type='lowpass';f.frequency.value=400;
-  o.frequency.setValueAtTime(180,ctx.currentTime);
-  o.frequency.linearRampToValueAtTime(120,ctx.currentTime+0.15);
-  g.gain.setValueAtTime(0,ctx.currentTime);
-  g.gain.linearRampToValueAtTime(0.1,ctx.currentTime+0.02);
-  g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
-  o.start();o.stop(ctx.currentTime+0.22);}catch(e){}
-}
-
-// Rain — soft noise burst
-function sndRain(){
-  try{const ctx=ac(),buf=ctx.createBuffer(1,ctx.sampleRate*0.6,ctx.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
-  const src=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
-  src.buffer=buf;f.type='bandpass';f.frequency.value=4000;f.Q.value=0.3;
-  g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(0.08,ctx.currentTime+0.1);
-  g.gain.linearRampToValueAtTime(0.08,ctx.currentTime+0.5);g.gain.linearRampToValueAtTime(0,ctx.currentTime+0.6);
-  src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.stop(ctx.currentTime+0.65);}catch(e){}
-}
-
-// Splash / water
-function sndSplash(){
-  try{const ctx=ac(),buf=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
-  const src=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
-  src.buffer=buf;f.type='bandpass';f.frequency.value=1200;f.Q.value=0.5;
-  g.gain.value=0.12;
-  src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.stop(ctx.currentTime+0.28);}catch(e){}
-}
-
-// Door creak — slow gliding tone
-function sndDoor(){
-  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
-  o.connect(g);g.connect(ctx.destination);o.type='sawtooth';
-  o.frequency.setValueAtTime(300,ctx.currentTime);
-  o.frequency.linearRampToValueAtTime(180,ctx.currentTime+0.4);
-  g.gain.setValueAtTime(0.06,ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);
-  o.start();o.stop(ctx.currentTime+0.5);}catch(e){}
-}
-
-// Coins / market
-function sndMarket(){sndCoin();setTimeout(sndCoin,120);setTimeout(sndCoin,260);}
-
-// Wind whoosh
-function sndWind(){
-  try{const ctx=ac(),buf=ctx.createBuffer(1,ctx.sampleRate*0.5,ctx.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(Math.sin(i/d.length*Math.PI),0.5);
-  const src=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
-  src.buffer=buf;f.type='bandpass';f.frequency.value=600;f.Q.value=0.4;
-  g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(0.07,ctx.currentTime+0.15);
-  g.gain.linearRampToValueAtTime(0,ctx.currentTime+0.5);
-  src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.stop(ctx.currentTime+0.55);}catch(e){}
-}
-
-// Fire crackle
-function sndFire(){
-  try{const ctx=ac(),buf=ctx.createBuffer(1,ctx.sampleRate*0.18,ctx.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,0.8);
-  const src=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
-  src.buffer=buf;f.type='bandpass';f.frequency.value=300;f.Q.value=1;g.gain.value=0.1;
-  src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.stop(ctx.currentTime+0.2);}catch(e){}
-}
-
-// Detect keywords in narrative and play matching sounds
+function sndMeow(){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.setValueAtTime(600,ctx.currentTime);o.frequency.linearRampToValueAtTime(900,ctx.currentTime+0.08);o.frequency.linearRampToValueAtTime(500,ctx.currentTime+0.35);g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(0.09,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.38);o.start();o.stop(ctx.currentTime+0.4);}catch(e){}}
+function sndBird(){[[0,900,1100],[0.15,1000,1300]].forEach(([d,f1,f2])=>{try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';const t=ctx.currentTime+d;o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+0.08);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);o.start(t);o.stop(t+0.12);}catch(e){}});}
+function sndDoor(){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,ctx.currentTime);o.frequency.linearRampToValueAtTime(180,ctx.currentTime+0.4);g.gain.setValueAtTime(0.06,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);o.start();o.stop(ctx.currentTime+0.5);}catch(e){}}
 function narrativeSounds(lines){
-  const text=lines.join(' ').toLowerCase();
-  if(/\bcat\b|kitten|meow|purr/.test(text)) setTimeout(sndMeow,300);
-  if(/\bbird|chirp|sparrow|robin|feather|wing/.test(text)) setTimeout(sndBird,300);
-  if(/\bdog\b|puppy|bark|woof|hound/.test(text)) setTimeout(sndWoof,300);
-  if(/\brain|drizzle|downpour|shower|drops/.test(text)) setTimeout(sndRain,300);
-  if(/\briver|splash|stream|puddle|pond|water/.test(text)) setTimeout(sndSplash,300);
-  if(/\bdoor|creak|gate|enter|inn|tavern/.test(text)) setTimeout(sndDoor,400);
-  if(/\bmarket|merchant|coin|shop|sell|buy|trade/.test(text)) setTimeout(sndMarket,300);
-  if(/\bwind|breeze|gust|leaves rustle/.test(text)) setTimeout(sndWind,300);
-  if(/\bfire|flame|hearth|torch|candle/.test(text)) setTimeout(sndFire,400);
+  const t=lines.join(' ').toLowerCase();
+  if(/\bcat\b|kitten|meow|purr/.test(t))setTimeout(sndMeow,400);
+  if(/\bbird|chirp|sparrow|robin/.test(t))setTimeout(sndBird,400);
+  if(/\bdoor|creak|gate|enter/.test(t))setTimeout(sndDoor,400);
 }
 
 // ── TTS ────────────────────────────────────────────────────────────────
-let voiceOn=true, curAudio=null;
-const XIK='sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
-const XIV='N2lVS1w4EtoT3dr4eOWO';
+let voiceOn=true,curAudio=null;
+let skipTypewriter=false;
+const XIK='sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26',XIV='N2lVS1w4EtoT3dr4eOWO';
 async function speak(text){
-  if(!voiceOn)return;
-  if(curAudio){curAudio.pause();curAudio=null;}
-  try{
-    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${XIV}`,{
-      method:'POST',
-      headers:{'xi-api-key':XIK,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
-    });
-    if(!r.ok)return;
-    curAudio=new Audio(URL.createObjectURL(await r.blob()));
-    curAudio.play().catch(()=>{});
-  }catch(e){}
+  if(!voiceOn)return;if(curAudio){curAudio.pause();curAudio=null;}
+  try{const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${XIV}`,{method:'POST',headers:{'xi-api-key':XIK,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
+  if(!r.ok)return;curAudio=new Audio(URL.createObjectURL(await r.blob()));curAudio.play().catch(()=>{});}catch(e){}
 }
-function toggleVoice(){
-  voiceOn=!voiceOn;
-  if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}
-  document.getElementById('vbtn').textContent=`♪ VOICE: ${voiceOn?'ON':'OFF'}`;
-}
+function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent=`♪ VOICE: ${voiceOn?'ON':'OFF'}`;}
 
-// ── Pixel drawing helpers ──────────────────────────────────────────────
+// ── Pixel helpers ──────────────────────────────────────────────────────
 function rect(x,y,w,h,c){cx.fillStyle=c;cx.fillRect(x,y,w,h);}
 function dot(x,y,c){cx.fillStyle=c;cx.fillRect(x,y,1,1);}
 function hline(x,y,w,c){cx.fillStyle=c;cx.fillRect(x,y,w,1);}
@@ -331,147 +167,70 @@ function stoneTile(x,y,w,h,light='#9a9080',dark='#6a6058',shadow='#4a4038'){
   for(let row=0;row<Math.ceil(h/bh);row++){
     const off=(row%2)*5;
     for(let col=0;col<Math.ceil(w/bw)+1;col++){
-      const bx=x+col*bw-off, by=y+row*bh;
-      if(bx+bw<x||bx>x+w) continue;
-      const cx2=Math.max(bx,x), cw=Math.min(bx+bw,x+w)-cx2;
-      const ch=Math.min(bh-1,y+h-by); if(ch<=0) continue;
-      rect(cx2,by,cw,ch,light);
-      hline(cx2,by+ch-1,cw,shadow);
-      vline(cx2+cw-1,by,ch,shadow);
+      const bx=x+col*bw-off,by=y+row*bh;
+      if(bx+bw<x||bx>x+w)continue;
+      const cx2=Math.max(bx,x),cw=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
+      if(ch<=0)continue;
+      rect(cx2,by,cw,ch,light);hline(cx2,by+ch-1,cw,shadow);vline(cx2+cw-1,by,ch,shadow);
     }
   }
 }
-
 function cobblePath(x,y,w,h){
   rect(x,y,w,h,'#8a7850');
-  const pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[259,0,13,7],[273,1,10,6],[285,0,14,7],[300,1,11,6],[312,0,8,7],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6],[259,8,13,7],[273,9,10,6],[285,8,14,7],[300,9,11,6]];
-  pat.forEach(([sx,sy,sw,sh])=>{
-    const ax=x+(sx%(w||1)), ay=y+sy;
-    if(ax>x+w||ay>y+h) return;
-    const fw=Math.min(sw,x+w-ax), fh=Math.min(sh,y+h-ay);
-    rect(ax,ay,fw,fh,'#b0986a');
-    hline(ax,ay,fw,'#c8ae82');
-    vline(ax,ay,fh,'#c8ae82');
-    hline(ax,ay+fh-1,fw,'#786040');
-    vline(ax+fw-1,ay,fh,'#786040');
-  });
+  const pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[259,0,13,7],[273,1,10,6],[285,0,14,7],[300,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6],[259,8,13,7],[273,9,10,6],[285,8,14,7],[300,9,11,6]];
+  pat.forEach(([sx,sy,sw,sh])=>{const ax=x+(sx%(w||1)),ay=y+sy;if(ax>x+w||ay>y+h)return;const fw=Math.min(sw,x+w-ax),fh=Math.min(sh,y+h-ay);rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');});
 }
-
 function pixelTree(x,y,sc=1){
-  const s=Math.max(1,Math.round(sc));
-  const tw=6*s, tx=x-tw/2;
-  rect(tx,y,tw,24*s,'#5a3010');
-  rect(tx+1,y,tw-2,24*s,'#7a4818');
-  rect(tx-3,y+20*s,4,4,'#5a3010');
-  rect(tx+tw-1,y+20*s,4,4,'#5a3010');
-  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828'],[x+2*s,y-19*s,4*s,4*s,'#62b02e']].forEach(([lx,ly,lw,lh,lc])=>{
-    const hw=Math.floor(lw/2);
-    for(let row=0;row<lh;row++){const bulge=Math.sin((row/lh)*Math.PI);const rw=Math.max(1,Math.round(lw*bulge));const rx=lx-hw+Math.round((lw-rw)/2);rect(rx,ly+row,rw,1,lc);}
-  });
+  const s=Math.max(1,Math.round(sc)),tw=6*s,tx=x-tw/2;
+  rect(tx,y,tw,24*s,'#5a3010');rect(tx+1,y,tw-2,24*s,'#7a4818');
+  rect(tx-3,y+20*s,4,4,'#5a3010');rect(tx+tw-1,y+20*s,4,4,'#5a3010');
+  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828'],[x+2*s,y-19*s,4*s,4*s,'#62b02e']].forEach(([lx,ly,lw,lh,lc])=>{const hw=Math.floor(lw/2);for(let row=0;row<lh;row++){const bulge=Math.sin((row/lh)*Math.PI);const rw=Math.max(1,Math.round(lw*bulge));rect(lx-hw+Math.round((lw-rw)/2),ly+row,rw,1,lc);}});
 }
-
-function pixelBush(x,y,c1='#2a5010',c2='#3a6818',c3='#4a8020'){
-  rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);
-  rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);
-}
-
-function stoneArch(x,y,w,h){
-  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');
-  stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
-  const cy2=y+h;
-  for(let i=0;i<w-16;i++){const t=(i/(w-16))*Math.PI;const ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}
-}
-
-function pixelHouse(x,y,w=50,h=40){
-  stoneTile(x,y+Math.round(h*0.3),w,Math.round(h*0.7));
-  const rh=Math.round(h*0.4);
-  for(let row=0;row<rh;row++){const sh=row/rh;rect(x+row,y+row,w-row*2,1,`rgb(${Math.round(160-sh*60)},${Math.round(60-sh*20)},10)`);}
-  rect(x+8,y+Math.round(h*0.45),10,8,'#1a2030');
-  hline(x+8,y+Math.round(h*0.45),10,'#a09070');
-  rect(x+Math.round(w*0.4),y+Math.round(h*0.65),Math.round(w*0.2),Math.round(h*0.35),'#3a1c08');
-}
-
-function pixelWater(x,y,w,h){
-  const t=Date.now()/800;
-  for(let row=0;row<h;row++){const d=row/h;rect(x,y+row,w,1,`rgb(${Math.round(20+d*10)},${Math.round(60+d*20)},${Math.round(120+d*30)})`);}
-  for(let i=0;i<5;i++){const rx=(i*65+Math.floor(t*20))%w;rect(x+rx,y+Math.round(h*0.3),20,1,'rgba(180,220,255,0.25)');rect(x+rx+8,y+Math.round(h*0.6),12,1,'rgba(180,220,255,0.2)');}
-}
-
-function pixelNPC(x,y,emoji){
-  cx.save();cx.globalAlpha=0.3;cx.fillStyle='#e8d060';cx.beginPath();cx.arc(x,y,10,0,Math.PI*2);cx.fill();cx.restore();
-  cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);
-}
+function pixelBush(x,y,c1='#2a5010',c2='#3a6818',c3='#4a8020'){rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);}
+function stoneArch(x,y,w,h){stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');const cy2=y+h;for(let i=0;i<w-16;i++){const t=(i/(w-16))*Math.PI;const ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}}
+function pixelHouse(x,y,w=50,h=40){stoneTile(x,y+Math.round(h*0.3),w,Math.round(h*0.7));const rh=Math.round(h*0.4);for(let row=0;row<rh;row++){const sh=row/rh;rect(x+row,y+row,w-row*2,1,`rgb(${Math.round(160-sh*60)},${Math.round(60-sh*20)},10)`);}rect(x+8,y+Math.round(h*0.45),10,8,'#1a2030');hline(x+8,y+Math.round(h*0.45),10,'#a09070');rect(x+Math.round(w*0.4),y+Math.round(h*0.65),Math.round(w*0.2),Math.round(h*0.35),'#3a1c08');}
+function pixelWater(x,y,w,h){const t=Date.now()/800;for(let row=0;row<h;row++){const d=row/h;rect(x,y+row,w,1,`rgb(${Math.round(20+d*10)},${Math.round(60+d*20)},${Math.round(120+d*30)})`);}for(let i=0;i<5;i++){const rx=(i*65+Math.floor(t*20))%w;rect(x+rx,y+Math.round(h*0.3),20,1,'rgba(180,220,255,0.25)');rect(x+rx+8,y+Math.round(h*0.6),12,1,'rgba(180,220,255,0.2)');}}
+function pixelNPC(x,y,emoji){cx.save();cx.globalAlpha=0.3;cx.fillStyle='#e8d060';cx.beginPath();cx.arc(x,y,10,0,Math.PI*2);cx.fill();cx.restore();cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);}
 
 function pixelPlayer(px,py,frame,dir=1){
-  cx.save();
-  if(dir===-1){cx.translate(Math.round(px)*2,0);cx.scale(-1,1);}
-  const x=Math.round(px-8), y=Math.round(py-20);
-  const legA=frame===1?3:frame===3?-3:0;
-  const legB=frame===1?-3:frame===3?3:0;
-  const bob=(frame===1||frame===3)?-1:0;
-  const skin='#8B5E3C'; // warm brown skin tone
-  const hair='#1a0e00'; // dark black-brown hair
-  rect(x+2,y+22,12,2,'rgba(0,0,0,0.3)');
-  // back leg
-  rect(x+3+legB,y+12+bob,4,7,'#5a3472');
-  rect(x+2+legB,y+18+bob,5,4,'#2a1800');
-  // skirt flare over legs
-  rect(x+1,y+11+bob,14,5,'#c03060');
-  // body — tunic/top
-  rect(x+2,y+5+bob,12,8,'#c03060');
-  // sash/belt detail
-  hline(x+2,y+12+bob,12,'#e8a020');
-  // cape/shawl
-  rect(x+1,y+6+bob,2,8+(frame===1?1:frame===3?-1:0),'#801840');
-  rect(x+12,y+6+bob,2,8-(frame===1?1:frame===3?-1:0),'#801840');
-  // arms
-  rect(x+1,y+7+legB+bob,3,6,skin);
-  rect(x+12,y+7+legA+bob,3,6,skin);
-  rect(x+1,y+12+legB+bob,2,2,skin);
-  rect(x+13,y+12+legA+bob,2,2,skin);
-  // front leg
-  rect(x+9+legA,y+12+bob,4,7,'#5a3472');
-  rect(x+9+legA,y+18+bob,5,4,'#2a1800');
-  // neck
-  rect(x+7,y+4+bob,3,3,skin);
-  // head
-  rect(x+5,y-2,8,7,skin);
-  // hair — long, dark, natural
-  rect(x+4,y-5,9,4,hair);      // top
-  rect(x+3,y-4,2,10,hair);     // left side long
-  rect(x+12,y-4,2,9,hair);     // right side long
-  rect(x+4,y-5,3,2,hair);
-  rect(x+4,y+4,2,4,hair);      // hair falling past shoulder
-  rect(x+11,y+4,2,4,hair);
-  // eyes — dark, expressive
-  dot(x+7,y+1,'#1a0800');dot(x+10,y+1,'#1a0800');
-  // eye shine
-  dot(x+8,y+1,'rgba(255,255,255,0.6)');dot(x+11,y+1,'rgba(255,255,255,0.6)');
-  // small smile
-  cx.strokeStyle='#6a3010';cx.lineWidth=1;cx.beginPath();cx.arc(px-1,py-19,3,0.3,Math.PI-0.3);cx.stroke();
-  // small earring
-  dot(x+4,y+2,'#e8c020');
-  // sword/staff at hip
-  rect(x+14,y+10+bob,2,8,'#909090');rect(x+14,y+10+bob,4,2,'#c8a030');
-  cx.restore();
+  cx.save();if(dir===-1){cx.translate(Math.round(px)*2,0);cx.scale(-1,1);}
+  const tmp=document.createElement('canvas');tmp.width=32;tmp.height=48;
+  const t=tmp.getContext('2d');t.imageSmoothingEnabled=false;
+  const skin='#8B5E3C',hair='#1a0e00',tunic='#c03060',legs='#5a3472',boot='#2a1800',gold='#e8a020';
+  const legA=frame===1?2:frame===3?-2:0,legB=frame===1?-2:frame===3?2:0,bob=(frame===1||frame===3)?1:0;
+  function r(x,y,w,h,c){t.fillStyle=c;t.fillRect(x,y,w,h);}
+  function d(x,y,c){t.fillStyle=c;t.fillRect(x,y,1,1);}
+  r(5,6,4,28,hair);r(3,8,3,10,hair);r(4,18,3,8,hair);r(6,26,3,8,hair);r(4,34,4,6,hair);
+  d(3,10,hair);d(2,13,hair);d(3,16,hair);d(2,19,hair);d(3,22,hair);d(2,25,hair);d(3,28,hair);d(4,32,hair);
+  r(23,6,4,28,hair);r(26,8,3,10,hair);r(25,18,3,8,hair);r(23,26,3,8,hair);r(24,34,4,6,hair);
+  d(28,10,hair);d(29,13,hair);d(28,16,hair);d(29,19,hair);d(28,22,hair);d(29,25,hair);d(28,28,hair);d(27,32,hair);
+  r(7,2,18,5,hair);d(7,1,hair);d(10,0,hair);d(14,1,hair);d(18,0,hair);d(22,1,hair);d(24,1,hair);
+  r(8,4,16,12,skin);
+  r(11,8,3,2,'#1a0800');r(18,8,3,2,'#1a0800');
+  d(12,7,'rgba(255,255,255,0.85)');d(19,7,'rgba(255,255,255,0.85)');
+  d(12,12,'#6a3010');d(13,13,'#6a3010');d(14,13,'#6a3010');d(15,13,'#6a3010');
+  d(16,13,'#6a3010');d(17,13,'#6a3010');d(18,13,'#6a3010');d(19,12,'#6a3010');
+  d(8,10,gold);d(23,10,gold);
+  r(13,16+bob,6,3,skin);r(8,18+bob,16,8,tunic);
+  r(5,18+bob,4,9,'#801840');r(23,18+bob,4,9,'#801840');
+  r(4,18+legB+bob,5,7,skin);r(23,18+legA+bob,5,7,skin);
+  r(8,25+bob,16,2,gold);r(6,26+bob,20,5,tunic);
+  r(9+legB,30+bob,6,7,legs);r(17+legA,30+bob,6,7,legs);
+  r(8+legB,36+bob,7,4,boot);r(17+legA,36+bob,7,4,boot);
+  r(26,18+bob,3,10,'#909090');r(24,18+bob,7,3,gold);
+  cx.drawImage(tmp,Math.round(px)-16,Math.round(py)-40);cx.restore();
 }
 
-// ── Scenes ─────────────────────────────────────────────────────────────
 const SCENES={
   village(W,H){
-    // sky
     for(let i=0;i<Math.round(H*0.38);i++){const d=i/(H*0.38);rect(0,i,W,1,`rgb(${Math.round(120+d*20)},${Math.round(176+d*16)},${Math.round(208+d*8)})`);}
-    // mountains
     [[W*0.05,H*0.25,W*0.18,'#607888'],[W*0.2,H*0.2,W*0.22,'#708898'],[W*0.55,H*0.22,W*0.2,'#607888'],[W*0.72,H*0.18,W*0.25,'#708898']].forEach(([mx,my,mw,mc])=>{for(let i=0;i<mw;i++){const mh=Math.round(Math.sin((i/mw)*Math.PI)*H*0.1);rect(mx+i,my-mh,1,mh+H*0.16,mc);}});
-    // ground
     for(let i=0;i<Math.round(H*0.62);i++){const d=i/(H*0.62);rect(0,Math.round(H*0.38)+i,W,1,`rgb(${Math.round(30+d*20)},${Math.round(60+d*40)},${Math.round(15+d*10)})`);}
     cobblePath(W*0.22,Math.round(H*0.52),W*0.56,Math.round(H*0.48));
     pixelTree(18,H*0.7,2.2);pixelTree(W-20,H*0.65,1.8);
     pixelHouse(W*0.55,H*0.1,70,55);
-    stoneTile(W*0.6,H*0.38,W*0.35,H*0.25);
-    stoneArch(W*0.68,H*0.26,30,20);
-    pixelHouse(W*0.05,H*0.18,44,40);
-    stoneTile(W*0.04,H*0.35,W*0.18,H*0.22,'#8a8070','#6a6058','#4a4838');
+    stoneTile(W*0.6,H*0.38,W*0.35,H*0.25);stoneArch(W*0.68,H*0.26,30,20);
+    pixelHouse(W*0.05,H*0.18,44,40);stoneTile(W*0.04,H*0.35,W*0.18,H*0.22,'#8a8070','#6a6058','#4a4838');
     stoneArch(W*0.3,H*0.52,45,18);
     pixelBush(W*0.22,H*0.65);pixelBush(W*0.48,H*0.6);pixelBush(W*0.74,H*0.72);
     rect(W*0.08,H*0.78,10,5,'#605850');rect(W*0.82,H*0.8,8,4,'#605850');
@@ -493,8 +252,7 @@ const SCENES={
     cobblePath(0,H*0.55,W,H*0.45);
     [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(([fx,fy,sc])=>pixelTree(W*fx,H*fy,sc));
     [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(([mx,my,mc])=>{rect(mx-2,my-2,4,6,'#c0b888');rect(mx-5,my-4,10,4,mc);rect(mx-3,my-5,6,3,mc);rect(mx-2,my-4,2,2,'rgba(255,255,220,0.6)');});
-    pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');
-    pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
+    pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
     pixelNPC(W*0.5,H*0.63,'🦊');
   },
   tavern(W,H){
@@ -510,7 +268,6 @@ const SCENES={
     [[W*0.06,'#801010'],[W*0.12,'#104888'],[W*0.18,'#106040'],[W*0.24,'#886010'],[W*0.30,'#481888']].forEach(([bx,bc])=>{rect(bx,H*0.15,7,18,bc);rect(bx+1,H*0.13,5,4,'#888');rect(bx+1,H*0.16,2,6,'rgba(255,255,255,0.2)');});
     hline(W*0.04,H*0.34,W*0.35,'#7a5020');
     rect(W*0.08,H*0.38,10,10,'#a07828');rect(W*0.2,H*0.38,10,10,'#a07828');
-    rect(W*0.52,H*0.44,3,10,'#e8e0a0');rect(W*0.52,H*0.43,3,2,'#e06810');
     pixelNPC(W*0.25,H*0.55,'🍺');pixelNPC(W*0.55,H*0.56,'🎶');
   },
   river(W,H){
@@ -530,15 +287,231 @@ function renderScene(){
   cx.imageSmoothingEnabled=false;
   (SCENES[S.scene]||SCENES.village)(PW,PH);
   tickChar();
-  const walking=charState!=='idle';
-  const walkFrame=walking?Math.floor(af/5)%4:0;
-  pixelPlayer(charX,PH*0.72,walkFrame,charDir);
-  af++;
-  requestAnimationFrame(renderScene);
+  const wf=charState!=='idle'?Math.floor(af/5)%4:0;
+  pixelPlayer(charX,PH*0.72,wf,charDir);
+  af++;requestAnimationFrame(renderScene);
 }
 
+// ── Game state ─────────────────────────────────────────────────────────
+const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'village'};
+
+// ── Story engine ───────────────────────────────────────────────────────
+// Each node: { scene, lines, event, hpChange, xpGain, goldChange, itemGained, choices: [{text, next}] }
+const STORY={
+  start:{
+    scene:'village',
+    lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],
+    event:'none',
+    choices:[
+      {text:"A) Visit the market stalls",next:'village_market'},
+      {text:"B) Talk to the old sage",next:'village_sage'},
+      {text:"C) Head toward the meadow",next:'meadow_arrive'},
+    ]
+  },
+  village_market:{
+    scene:'village',
+    lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],
+    event:'none',
+    choices:[
+      {text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},
+      {text:"B) Browse for something else",next:'market_browse'},
+      {text:"C) Head to the tavern instead",next:'tavern_arrive'},
+    ]
+  },
+  buy_cake:{
+    scene:'village',
+    lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],
+    event:'loot',goldChange:-3,itemGained:'honey cake',
+    choices:[
+      {text:"A) Head to the meadow",next:'meadow_arrive'},
+      {text:"B) Visit the sage",next:'village_sage'},
+      {text:"C) Go to the tavern",next:'tavern_arrive'},
+    ]
+  },
+  market_browse:{
+    scene:'village',
+    lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],
+    event:'loot',xpGain:5,itemGained:'lucky acorn',
+    choices:[
+      {text:"A) Head to the meadow",next:'meadow_arrive'},
+      {text:"B) Go to the tavern",next:'tavern_arrive'},
+      {text:"C) Head to the forest",next:'forest_arrive'},
+    ]
+  },
+  village_sage:{
+    scene:'village',
+    lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],
+    event:'loot',xpGain:10,itemGained:'healing herb',
+    choices:[
+      {text:"A) Go to the river",next:'river_arrive'},
+      {text:"B) Go to the forest",next:'forest_arrive'},
+      {text:"C) Head to the meadow",next:'meadow_arrive'},
+    ]
+  },
+  tavern_arrive:{
+    scene:'tavern',
+    lines:["The tavern door creaks open and warm light spills out.","A bard strums a cheerful tune in the corner.","The barkeep slides a frothy mug toward you with a wink."],
+    event:'rest',hpChange:5,
+    choices:[
+      {text:"A) Listen to the bard",next:'tavern_bard'},
+      {text:"B) Ask the barkeep for news",next:'tavern_news'},
+      {text:"C) Head back outside",next:'village_market'},
+    ]
+  },
+  tavern_bard:{
+    scene:'tavern',
+    lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar — and so does your experience!"],
+    event:'rest',xpGain:15,hpChange:3,
+    choices:[
+      {text:"A) Go to the river",next:'river_arrive'},
+      {text:"B) Stay and have another drink",next:'tavern_rest'},
+      {text:"C) Head to the forest",next:'forest_arrive'},
+    ]
+  },
+  tavern_news:{
+    scene:'tavern',
+    lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],
+    event:'none',xpGain:5,
+    choices:[
+      {text:"A) Go find the fox",next:'forest_fox'},
+      {text:"B) Head to the meadow first",next:'meadow_arrive'},
+      {text:"C) Visit the river",next:'river_arrive'},
+    ]
+  },
+  tavern_rest:{
+    scene:'tavern',
+    lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel completely restored."],
+    event:'rest',hpChange:8,
+    choices:[
+      {text:"A) Head to the river",next:'river_arrive'},
+      {text:"B) Go to the forest",next:'forest_arrive'},
+      {text:"C) Explore the meadow",next:'meadow_arrive'},
+    ]
+  },
+  meadow_arrive:{
+    scene:'meadow',
+    lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
+    event:'none',
+    choices:[
+      {text:"A) Pick some flowers",next:'meadow_flowers'},
+      {text:"B) Follow the path to the river",next:'river_arrive'},
+      {text:"C) Chase that rabbit!",next:'meadow_rabbit'},
+    ]
+  },
+  meadow_flowers:{
+    scene:'meadow',
+    lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for just a moment — magical!"],
+    event:'loot',xpGain:8,itemGained:'flower bouquet',
+    choices:[
+      {text:"A) Continue to the river",next:'river_arrive'},
+      {text:"B) Head into the forest",next:'forest_arrive'},
+      {text:"C) Return to the village",next:'start'},
+    ]
+  },
+  meadow_rabbit:{
+    scene:'meadow',
+    lines:["The rabbit darts left, then right — too quick for you!","You tumble into a patch of soft clover. The rabbit watches smugly.","But look — you've found a gold coin in the grass!"],
+    event:'loot',xpGain:5,goldChange:3,
+    choices:[
+      {text:"A) Head to the river",next:'river_arrive'},
+      {text:"B) Go back to the village",next:'start'},
+      {text:"C) Explore the forest",next:'forest_arrive'},
+    ]
+  },
+  river_arrive:{
+    scene:'river',
+    lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],
+    event:'none',
+    choices:[
+      {text:"A) Investigate the glint",next:'river_treasure'},
+      {text:"B) Sit and rest by the bank",next:'river_rest'},
+      {text:"C) Cross into the forest",next:'forest_arrive'},
+    ]
+  },
+  river_treasure:{
+    scene:'river',
+    lines:["You wade in and find a beautiful old lantern under the bridge!","It still glows faintly, as if it has never quite gone out."],
+    event:'loot',xpGain:20,itemGained:'lantern',
+    choices:[
+      {text:"A) Head to the forest",next:'forest_arrive'},
+      {text:"B) Return to the village",next:'start'},
+      {text:"C) Rest by the river",next:'river_rest'},
+    ]
+  },
+  river_rest:{
+    scene:'river',
+    lines:["You sit on a mossy rock and let the sound of the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and completely restored."],
+    event:'rest',hpChange:7,xpGain:5,
+    choices:[
+      {text:"A) Cross to the forest",next:'forest_arrive'},
+      {text:"B) Head back to the village",next:'start'},
+      {text:"C) Go to the meadow",next:'meadow_arrive'},
+    ]
+  },
+  forest_arrive:{
+    scene:'forest',
+    lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, their roots knotted like old friends.","Something rustles in the undergrowth nearby."],
+    event:'none',
+    choices:[
+      {text:"A) Investigate the rustling",next:'forest_rustling'},
+      {text:"B) Search for mushrooms",next:'forest_mushrooms'},
+      {text:"C) Look for the talking fox",next:'forest_fox'},
+    ]
+  },
+  forest_rustling:{
+    scene:'forest',
+    lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart is pounding but you're unharmed — just startled!"],
+    event:'encounter',hpChange:-3,xpGain:12,
+    choices:[
+      {text:"A) Find the fox",next:'forest_fox'},
+      {text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},
+      {text:"C) Head back to the village",next:'start'},
+    ]
+  },
+  forest_mushrooms:{
+    scene:'forest',
+    lines:["You find a cluster of plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful. You gather a generous handful."],
+    event:'loot',xpGain:8,itemGained:'mushroom',
+    choices:[
+      {text:"A) Look for the talking fox",next:'forest_fox'},
+      {text:"B) Head to the river",next:'river_arrive'},
+      {text:"C) Return to the village",next:'start'},
+    ]
+  },
+  forest_fox:{
+    scene:'forest',
+    lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],
+    event:'loot',xpGain:25,itemGained:'map fragment',
+    choices:[
+      {text:"A) Study the map — head to river",next:'river_treasure'},
+      {text:"B) Return to the village with this news",next:'village_sage_end'},
+      {text:"C) Rest in the meadow first",next:'meadow_arrive'},
+    ]
+  },
+  village_sage_end:{
+    scene:'village',
+    lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],
+    event:'loot',xpGain:30,itemGained:'warm scarf',
+    choices:[
+      {text:"A) Continue the adventure",next:'epilogue'},
+      {text:"B) Rest at the tavern first",next:'tavern_rest'},
+      {text:"C) Explore the meadow once more",next:'meadow_arrive'},
+    ]
+  },
+  epilogue:{
+    scene:'meadow',
+    lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],
+    event:'rest',hpChange:20,xpGain:50,
+    choices:[
+      {text:"A) Play again from the start",next:'start'},
+      {text:"B) Explore a little more",next:'meadow_flowers'},
+      {text:"C) Visit the village once more",next:'start'},
+    ]
+  },
+};
+
 // ── UI ─────────────────────────────────────────────────────────────────
-const EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','gold coin':'🪙','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','bread loaf':'🍞','map fragment':'🗺️','fish':'🐟','key':'🗝️'};
+const EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️','fish':'🐟','key':'🗝️'};
 
 function updateStats(){
   document.getElementById('hptx').textContent=`${S.hp}/${S.maxHp}`;
@@ -558,103 +531,127 @@ function log(text,cls=''){
   if(b.children.length>80)b.removeChild(b.children[0]);
 }
 
-function typewriterLog(text, cls='', onDone){
-  const b=document.getElementById('log');
-  const d=document.createElement('div');
+function showSkipBtn(onSkip){
+  const inn=document.getElementById('cinn');
+  inn.innerHTML='<button class="cb" style="flex:none;opacity:0.7" id="skipbtn" onclick="skipNow()">▶▶ SKIP</button>';
+  window._skipCallback=onSkip;
+}
+function skipNow(){
+  skipTypewriter=true;
+  document.getElementById('skipbtn')?.remove();
+  if(window._skipCallback){window._skipCallback();window._skipCallback=null;}
+}
+function hideSkipBtn(){
+  skipTypewriter=false;
+  document.getElementById('skipbtn')?.remove();
+}
+
+function typewriterLog(text,cls,onDone){
+  const b=document.getElementById('log'),d=document.createElement('div');
   d.className='ll'+(cls?' '+cls:'');
-  d.textContent='';
-  b.appendChild(d);
+  d.textContent='';b.appendChild(d);
+  if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;if(onDone)onDone();return;}
   let i=0;
   const iv=setInterval(()=>{
-    d.textContent+=text[i++];
-    b.scrollTop=b.scrollHeight;
+    if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;clearInterval(iv);if(onDone)onDone();return;}
+    d.textContent+=text[i++];b.scrollTop=b.scrollHeight;
     if(i>=text.length){clearInterval(iv);if(onDone)onDone();}
   },28);
 }
 
-function typewriterLines(lines, cls='', onDone){
+function typewriterLines(lines,cls,onDone){
+  skipTypewriter=false;
   let i=0;
   function next(){
-    if(i>=lines.length){if(onDone)onDone();return;}
+    if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     typewriterLog(lines[i++],cls,()=>setTimeout(next,120));
   }
+  // show skip button while lines are typing
+  showSkipBtn(()=>{
+    // complete all remaining lines instantly
+    skipTypewriter=true;
+    // let the intervals finish naturally via the skipTypewriter flag
+    // then call onDone after a brief delay
+    setTimeout(()=>{
+      // print any remaining lines instantly
+      const b=document.getElementById('log');
+      while(i<lines.length){
+        const d=document.createElement('div');
+        d.className='ll'+(cls?' '+cls:'');
+        d.textContent=lines[i++];
+        b.appendChild(d);
+      }
+      b.scrollTop=b.scrollHeight;
+      hideSkipBtn();
+      if(onDone)onDone();
+    },80);
+  });
   next();
 }
 
 function setSt(msg){document.getElementById('cinn').innerHTML=`<span id="stxt">${msg}</span>`;}
 
-function renderChoices(ch){
+function renderChoices(choices){
   const inn=document.getElementById('cinn');inn.innerHTML='';
-  if(!ch||!ch.length){setSt('[no choices]');return;}
-  ch.forEach(c=>{const b=document.createElement('button');b.className='cb';b.textContent=c;b.onclick=()=>onChoice(c,ch);inn.appendChild(b);});
+  choices.forEach(c=>{const b=document.createElement('button');b.className='cb';b.textContent=c.text;b.onclick=()=>onChoice(c.next);inn.appendChild(b);});
 }
 
 function disableCh(){document.querySelectorAll('.cb').forEach(b=>b.disabled=true);}
 
-// ── Claude ─────────────────────────────────────────────────────────────
-const SYS=`You are the warm, whimsical narrator of a cozy pixel-art RPG — think classic JRPG meets hobbit-core. Rolling hills, stone villages, mossy forests, riverside inns, friendly creatures. Tone: wholesome, charming, occasionally witty.
+// ── Story progression ──────────────────────────────────────────────────
+function goToNode(nodeId){
+  const node=STORY[nodeId];
+  if(!node){log('[The path ends here...]','s');return;}
 
-Respond ONLY with valid JSON, no markdown.
-{"location":"village|meadow|forest|tavern|river","narrative":["line1","line2"],"event":"none|encounter|loot|rest|magic|gameover","hpChange":0,"xpGain":0,"goldChange":0,"itemGained":"","choices":["A) ...","B) ...","C) ..."]}
+  // Apply effects
+  if(node.hpChange) S.hp=Math.min(S.maxHp,Math.max(0,S.hp+node.hpChange));
+  if(node.xpGain) S.xp+=node.xpGain;
+  if(node.goldChange) S.gold=Math.max(0,S.gold+node.goldChange);
+  if(node.itemGained&&S.inv.length<8) S.inv.push(node.itemGained);
+  updateStats();
 
-location = exactly one of the 5 options. 2-3 warm lines. encounter: hpChange -2 to -4. loot: gold or item. rest: hpChange +4 to +8. gameover only if hp=0, gentle/funny. Always 3 choices. JSON ONLY.`;
+  // Sound effects
+  if(node.event==='loot') sndPickup();
+  else if(node.goldChange>0) sndCoin();
+  else if(node.event==='rest') sndHeal();
+  else if(node.event==='encounter'&&node.hpChange<0) sndBump();
+  narrativeSounds(node.lines);
 
-async function callClaude(action){
-  S.hist.push({role:'user',content:`State:${JSON.stringify({hp:S.hp,maxHp:S.maxHp,xp:S.xp,gold:S.gold,inv:S.inv,scene:S.scene})}\nAction:${action}`});
-  const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:SYS,messages:S.hist})});
-  if(!r.ok)throw new Error('API '+r.status);
-  const data=await r.json();
-  const raw=data.content.map(b=>b.text||'').join('');
-  const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
-  S.hist.push({role:'assistant',content:raw});
-  if(S.hist.length>18)S.hist=S.hist.slice(-14);
-  return parsed;
-}
+  // Narrative class
+  const cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
 
-async function onChoice(text,all){
-  disableCh();log('▸ '+text,'s');setSt('▸ Walking...');
-  try{
-    const res=await callClaude(text);
-    if(res.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+res.hpChange));
-    if(res.xpGain)S.xp+=res.xpGain;
-    if(res.goldChange)S.gold=Math.max(0,S.gold+res.goldChange);
-    if(res.itemGained&&S.inv.length<8)S.inv.push(res.itemGained);
-    updateStats();
-    if(res.event==='loot'||res.event==='magic')sndPickup();
-    else if(res.goldChange>0)sndCoin();
-    else if(res.event==='rest')sndHeal();
-    else if(res.event==='encounter'&&res.hpChange<0)sndBump();
-    speak(res.narrative.join(' '));
-    narrativeSounds(res.narrative);
-    const narCls=res.event==='loot'?'g':res.event==='encounter'&&res.hpChange<0?'b':'';
-    typewriterLines(res.narrative, narCls, ()=>{
-      const newScene=res.location||S.scene;
-      const finish=()=>{
-        if(res.event==='gameover'){typewriterLog('💤 You dozed off peacefully!','s',()=>{document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';});return;}
-        renderChoices(res.choices);
-      };
-      setTimeout(()=>animateWalkOut(newScene,finish),200);
+  // Speak
+  speak(node.lines.join(' '));
+
+  const finish=()=>{
+    typewriterLines(node.lines,cls,()=>{
+      if(S.hp<=0){
+        typewriterLog('💤 You collapse gently in the grass... what a journey!','s',()=>{
+          document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
+        });
+        return;
+      }
+      renderChoices(node.choices);
     });
-  }catch(e){
-    charState='idle';charX=160;
-    console.error(e);log('[Connection error — try again]','s');renderChoices(all);
-  }
+  };
+
+  animateWalkOut(node.scene, finish);
 }
 
-async function startGame(){
-  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.hist=[];S.scene='village';
+function onChoice(nextId){
+  disableCh();
+  setSt('▸ Walking...');
+  goToNode(nextId);
+}
+
+function startGame(){
+  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.scene='village';
   charX=160;charState='idle';
-  updateStats();document.getElementById('log').innerHTML='';setSt('▸ Loading world...');
-  try{
-    const res=await callClaude('BEGIN GAME. Welcome the wanderer to a charming pixel-art world. Warm hobbit-core tone. Start in the village.');
-    if(res.location)S.scene=res.location;updateStats();
-    playAmbient(S.scene);
-    speak(res.narrative.join(' '));
-    typewriterLines(res.narrative, '', ()=>renderChoices(res.choices));
-  }catch(e){
-    console.error(e);setSt('[Could not reach the realm — retry]');
-    document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ RETRY</button>';
-  }
+  updateStats();
+  document.getElementById('log').innerHTML='';
+  log('Welcome to Maplehaven, Wanderer. ✦','s');
+  playAmbient('village');
+  setTimeout(()=>goToNode('start'),400);
 }
 
 window.onload=()=>{
