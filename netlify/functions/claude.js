@@ -17,8 +17,14 @@ export default async (req) => {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'messages-2023-06-01',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        model: body.model,
+        max_tokens: body.max_tokens,
+        system: body.system,
+        messages: body.messages,
+      }),
     });
 
     const data = await response.json();
