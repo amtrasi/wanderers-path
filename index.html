@@ -10,9 +10,9 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:#1a1208;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;padding:8px;}
   #wrap{width:100%;max-width:800px;border:3px solid #7a6030;box-shadow:0 0 40px #00000088;}
-  #topbar{background:#2a1e08;border-bottom:2px solid #7a6030;padding:5px 12px;display:flex;justify-content:space-between;align-items:center;}
-  #title{color:#e8c040;font-size:9px;letter-spacing:1px;text-shadow:2px 2px #000;}
-  .tbtn{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:7px;padding:3px 7px;cursor:pointer;}
+  #topbar{background:#2a1e08;border-bottom:2px solid #7a6030;padding:5px 12px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  #gametitle{color:#e8c040;font-size:9px;letter-spacing:1px;text-shadow:2px 2px #000;}
+  .tbtn{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:7px;padding:3px 7px;cursor:pointer;white-space:nowrap;}
   .tbtn:hover{border-color:#e8c040;color:#e8c040;}
   #scene-wrap{position:relative;width:100%;line-height:0;}
   #scene{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
@@ -44,9 +44,11 @@
 <body>
 <div id="wrap">
   <div id="topbar">
-    <span id="title">✦ THE WANDERER'S PATH ✦</span>
-    <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
-    <button class="tbtn" id="sbtn" onclick="toggleSound()">♫ SOUND: ON</button>
+    <span id="gametitle">✦ THE WANDERER'S PATH ✦</span>
+    <div style="display:flex;gap:5px;">
+      <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
+      <button class="tbtn" id="sbtn" onclick="toggleSound()">♫ SOUND: ON</button>
+    </div>
   </div>
   <div id="scene-wrap">
     <canvas id="scene"></canvas>
@@ -55,7 +57,7 @@
       <div class="hb"><div class="hbf" id="bhp" style="width:100%"></div></div>
       <div class="hr">XP <span class="hv" id="xptx">0</span></div>
       <div class="hb"><div class="hbf" id="bxp" style="width:0%"></div></div>
-      <div class="hr">📍<span class="hv" id="loctx">???</span></div>
+      <div class="hr">📍<span class="hv" id="loctx">the road</span></div>
     </div>
   </div>
   <div id="inv-bar">
@@ -67,145 +69,168 @@
   <div id="cbar"><div id="cinn"><span id="stxt">▸ Loading...</span></div></div>
 </div>
 <script>
-// ── Constants & URLs ───────────────────────────────────────────────────
-const PW=320, PH=180;
-const BASE='https://amtrasi.github.io/wanderers-path/audio/';
-const AMBIENT_URLS={
+// ── Constants ──────────────────────────────────────────────────────────
+var PW=320, PH=180;
+var BASE='https://amtrasi.github.io/wanderers-path/audio/';
+var AMBIENT={
   village: BASE+'580150__dan_audiofile__birmingham-open-air-market.wav',
   river:   BASE+'222752__minian89__babbling_brook_loop.wav',
   tavern:  BASE+'695295__brunoboselli__pirate-tavern.wav',
   forest:  BASE+'427400__imjeax__forest-ambient-loop.wav',
-  meadow:  BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav',
+  meadow:  BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav'
 };
-const DOOR_URL  = BASE+'460542__coosemek__door-creak.wav';
-const MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
-const LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
-const STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
-const XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
-const XI_VOICE  = 'N2lVS1w4EtoT3dr4eOWO';
+var DOOR_URL  = BASE+'460542__coosemek__door-creak.wav';
+var MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
+var LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
+var STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
+var XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
+var XI_VOICE  = 'N2lVS1w4EtoT3dr4eOWO';
 
-// ── Game state ─────────────────────────────────────────────────────────
-const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
+// ── State ──────────────────────────────────────────────────────────────
+var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
+var soundOn=true, voiceOn=true;
 
-// ── Audio helpers ──────────────────────────────────────────────────────
-let actx=null;
+// ── Audio ──────────────────────────────────────────────────────────────
+var actx=null;
 function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
 
-function fadeAudio(audio,from,to,dur,onDone){
-  const steps=40,iv=dur/steps,delta=(to-from)/steps;
-  let v=from,n=0;
-  const t=setInterval(()=>{
-    v+=delta;n++;
+// Single ambient channel — only one plays at a time
+var amb=null, ambScene=null;
+function setAmbient(scene){
+  if(ambScene===scene) return;
+  var url=AMBIENT[scene]; if(!url) return;
+  // Stop old
+  if(amb){var old=amb;old.pause();old.src='';amb=null;}
+  ambScene=scene;
+  if(!soundOn) return;
+  var a=new Audio(url);
+  a.loop=true; a.volume=0;
+  a.play().catch(function(){});
+  fadeVol(a,0,0.35,1200);
+  amb=a;
+}
+function stopAmbient(){
+  if(amb){amb.pause();amb.src='';amb=null;ambScene=null;}
+}
+
+function fadeVol(audio,from,to,dur,cb){
+  var steps=40,iv=dur/steps,delta=(to-from)/steps,v=from,n=0;
+  var t=setInterval(function(){
+    v+=delta; n++;
     audio.volume=Math.max(0,Math.min(1,v));
-    if(n>=steps){clearInterval(t);if(onDone)onDone();}
+    if(n>=steps){clearInterval(t);if(cb)cb();}
   },iv);
 }
 
-// Ambient
-let ambientAudio=null,ambientScene=null;
-function playAmbient(scene){
-  if(ambientScene===scene)return;
-  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,1200,()=>{o.pause();o.src='';});}
-  const url=AMBIENT_URLS[scene];if(!url)return;
-  const a=new Audio(url);a.loop=true;a.volume=0;a.play().catch(()=>{});
-  fadeAudio(a,0,0.35,1200);
-  ambientAudio=a;ambientScene=scene;
+// Lobby music — separate channel
+var lobby=null;
+function startLobby(){
+  if(lobby) return;
+  lobby=new Audio(LOBBY_URL);
+  lobby.loop=true; lobby.volume=0.5;
+  if(!soundOn) return;
+  lobby.play().catch(function(){});
+}
+function stopLobby(cb){
+  if(!lobby){if(cb)cb();return;}
+  var l=lobby; lobby=null;
+  fadeVol(l,l.volume,0,800,function(){l.pause();l.src='';if(cb)cb();});
 }
 
-// Lobby music
-let lobbyMusic=null;
-function startLobbyMusic(){
-  if(lobbyMusic)return;
-  lobbyMusic=new Audio(LOBBY_URL);
-  lobbyMusic.loop=true;lobbyMusic.volume=0.5;
-  lobbyMusic.play().catch(()=>{});
-}
-function stopLobbyMusic(){
-  if(!lobbyMusic)return;
-  const o=lobbyMusic;lobbyMusic=null;
-  fadeAudio(o,o.volume,0,1000,()=>{o.pause();o.src='';});
-}
-
-// Tavern door + fade
-function playDoorAndEnterTavern(){
-  const door=new Audio(DOOR_URL);door.volume=0.9;door.play().catch(()=>{});
-  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,400,()=>{o.pause();o.src='';});}
-  const a=new Audio(AMBIENT_URLS.tavern);a.loop=true;a.volume=0;a.play().catch(()=>{});
-  setTimeout(()=>fadeAudio(a,0,0.35,1200),1200);
-  ambientAudio=a;ambientScene='tavern';
-}
-
-// Cat meow (amplified)
-function playCatMeow(){
-  try{
-    const ctx=ac();
-    const audio=new Audio(MEOW_URL);
-    const src=ctx.createMediaElementSource(audio);
-    const gain=ctx.createGain();gain.gain.value=3.5;
-    src.connect(gain);gain.connect(ctx.destination);
-    audio.play().catch(()=>{});
-  }catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
+// Tavern: door creak then fade in tavern ambient
+function tavernEnter(){
+  stopAmbient();
+  ambScene='tavern';
+  if(!soundOn){
+    var a=new Audio(AMBIENT.tavern);a.loop=true;a.volume=0.35;
+    amb=a; return;
+  }
+  var door=new Audio(DOOR_URL); door.volume=0.9; door.play().catch(function(){});
+  var a=new Audio(AMBIENT.tavern); a.loop=true; a.volume=0;
+  a.play().catch(function(){});
+  setTimeout(function(){fadeVol(a,0,0.35,1200);},1400);
+  amb=a;
 }
 
 // Footsteps
-let footstepAudio=null;
-function startFootsteps(){
-  if(footstepAudio)return;
-  footstepAudio=new Audio(STEPS_URL);
-  footstepAudio.loop=true;footstepAudio.volume=0.5;
-  footstepAudio.play().catch(()=>{});
+var steps=null;
+function startSteps(){
+  if(steps) return;
+  if(!soundOn) return;
+  steps=new Audio(STEPS_URL);
+  steps.loop=true; steps.volume=0.5;
+  steps.play().catch(function(){});
 }
-function stopFootsteps(){
-  if(footstepAudio){footstepAudio.pause();footstepAudio.currentTime=0;footstepAudio=null;}
+function stopSteps(){
+  if(steps){steps.pause();steps.currentTime=0;steps=null;}
 }
 
-// Synth sounds
-function tn(freq,dur,delay,vol,type){
+// Synth fx
+function tn(f,d,delay,vol,type){
+  if(!soundOn)return;
   delay=delay||0;vol=vol||0.06;type=type||'sine';
-  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
-  o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;
-  const t=ctx.currentTime+delay;
+  try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=f;
+  var t=ctx.currentTime+delay;
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);
-  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-  o.start(t);o.stop(t+dur+0.05);}catch(e){}
+  g.gain.exponentialRampToValueAtTime(0.001,t+d);
+  o.start(t);o.stop(t+d+0.05);}catch(e){}
 }
 function sndPickup(){[523,659,784].forEach(function(f,i){tn(f,0.18,i*0.1);});}
 function sndCoin(){tn(880,0.1);tn(1100,0.1,0.08);}
 function sndHeal(){tn(528,0.35,0,0.05);}
 function sndBump(){tn(220,0.12,0,0.05,'square');tn(180,0.14,0.09,0.04,'square');}
 function sndBird(){
+  if(!soundOn)return;
   [[0,900,1100],[0.15,1000,1300]].forEach(function(arr){
-    var d=arr[0],f1=arr[1],f2=arr[2];
     try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
     o.connect(g);g.connect(ctx.destination);o.type='sine';
-    var t=ctx.currentTime+d;
-    o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+0.08);
+    var t=ctx.currentTime+arr[0];
+    o.frequency.setValueAtTime(arr[1],t);o.frequency.linearRampToValueAtTime(arr[2],t+0.08);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);
     g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
     o.start(t);o.stop(t+0.12);}catch(e){}
   });
 }
+function playCatMeow(){
+  if(!soundOn)return;
+  try{
+    var ctx=ac(),audio=new Audio(MEOW_URL);
+    var src=ctx.createMediaElementSource(audio);
+    var gain=ctx.createGain(); gain.gain.value=3.5;
+    src.connect(gain); gain.connect(ctx.destination);
+    audio.play().catch(function(){});
+  }catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
+}
 
-function narrativeSounds(lines){
-  var t=lines.join(' ').toLowerCase();
-  if(/\bcat\b|kitten|meow|purr/.test(t))setTimeout(playCatMeow,400);
-  if(/\bbird|chirp|sparrow|robin/.test(t))setTimeout(sndBird,400);
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
+  if(!soundOn){
+    if(amb){amb.pause();}
+    if(steps){steps.pause();}
+    if(lobby){lobby.pause();}
+  } else {
+    if(amb){amb.play().catch(function(){});}
+    if(steps){steps.play().catch(function(){});}
+    if(lobby){lobby.play().catch(function(){});}
+  }
 }
 
 // ── TTS ────────────────────────────────────────────────────────────────
-let voiceOn=true,curAudio=null;
+var curAudio=null;
 async function speak(text){
   if(!voiceOn)return;
   if(curAudio){curAudio.pause();curAudio=null;}
   try{
-    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{
+    var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{
       method:'POST',
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
+      body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
     });
     if(!r.ok)return;
     curAudio=new Audio(URL.createObjectURL(await r.blob()));
-    curAudio.play().catch(()=>{});
+    curAudio.play().catch(function(){});
   }catch(e){}
 }
 function toggleVoice(){
@@ -214,39 +239,68 @@ function toggleVoice(){
   document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');
 }
 
-// ── Character animation ────────────────────────────────────────────────
-let charX=160,charState='idle',charDir=1;
-let pendingScene=null,pendingCallback=null;
+// ── Character & animation ──────────────────────────────────────────────
+var charX=160, charY=0.72, charScale=1;
+var charState='idle'; // idle | walkout | walkin | walkup
+var pendingCb=null, pendingScene=null;
+var af=0;
 
-function animateWalkOut(newScene,cb){
-  pendingScene=newScene;pendingCallback=cb;
-  charState='walkout';charDir=1;
-  if(newScene==='tavern'){
-    setTimeout(playDoorAndEnterTavern,300);
-  }else{
-    playAmbient(newScene);
-  }
-  startFootsteps();
-}
 function tickChar(){
   if(charState==='walkout'){
     charX+=2;
-    if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}
-  }else if(charState==='walkin'){
+    if(charX>PW+20){
+      S.scene=pendingScene; charX=-20; charState='walkin';
+    }
+  } else if(charState==='walkin'){
     charX+=2;
-    if(charX>=PW/2){charX=PW/2;charState='idle';stopFootsteps();if(pendingCallback){pendingCallback();pendingCallback=null;}}
+    if(charX>=PW/2){
+      charX=PW/2; charState='idle'; stopSteps();
+      if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}
+    }
+  } else if(charState==='walkup'){
+    // Walk toward gate — move up and shrink
+    charY-=0.003;
+    charScale=Math.max(0.15, charScale-0.008);
+    if(charScale<=0.18){
+      charState='idle';
+      if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}
+    }
   }
 }
 
+function walkOut(newScene, cb){
+  pendingScene=newScene; pendingCb=cb;
+  charState='walkout'; charDir=1;
+  if(newScene==='tavern') tavernEnter();
+  else setAmbient(newScene);
+  startSteps();
+}
+
+function walkIn(cb){
+  charX=-20; charY=0.72; charScale=1;
+  charState='walkin';
+  pendingCb=cb;
+  startSteps();
+}
+
+function walkUpToGate(cb){
+  charState='walkup';
+  charX=PW/2; charY=0.72; charScale=1;
+  pendingCb=cb;
+  startSteps();
+}
+
+var charDir=1;
+
 // ── Canvas ─────────────────────────────────────────────────────────────
-const cv=document.getElementById('scene'),cx=cv.getContext('2d');
+var cv=document.getElementById('scene'), cx=cv.getContext('2d');
 cx.imageSmoothingEnabled=false;
-let af=0;
 
 function resizeCanvas(){
-  const w=document.getElementById('scene-wrap').clientWidth||780;
-  cv.width=PW;cv.height=PH;
-  cv.style.width=w+'px';cv.style.height=Math.round(w*(PH/PW))+'px';
+  var w=document.getElementById('scene-wrap').clientWidth||780;
+  cv.width=PW; cv.height=PH;
+  cv.style.width=w+'px';
+  cv.style.height=Math.round(w*(PH/PW))+'px';
 }
 
 // ── Pixel helpers ──────────────────────────────────────────────────────
@@ -264,44 +318,55 @@ function stoneTile(x,y,w,h,light,dark,shadow){
     for(var col=0;col<Math.ceil(w/bw)+1;col++){
       var bx=x+col*bw-off,by=y+row*bh;
       if(bx+bw<x||bx>x+w)continue;
-      var cx2=Math.max(bx,x),cw=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
+      var cx2=Math.max(bx,x),cw2=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
       if(ch<=0)continue;
-      rect(cx2,by,cw,ch,light);hline(cx2,by+ch-1,cw,shadow);vline(cx2+cw-1,by,ch,shadow);
+      rect(cx2,by,cw2,ch,light);hline(cx2,by+ch-1,cw2,shadow);vline(cx2+cw2-1,by,ch,shadow);
     }
   }
 }
 
 function cobblePath(x,y,w,h){
   rect(x,y,w,h,'#8a7850');
-  var pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[259,0,13,7],[273,1,10,6],[285,0,14,7],[300,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6],[259,8,13,7],[273,9,10,6],[285,8,14,7],[300,9,11,6]];
+  var pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6]];
   pat.forEach(function(p){var ax=x+(p[0]%(w||1)),ay=y+p[1];if(ax>x+w||ay>y+h)return;var fw=Math.min(p[2],x+w-ax),fh=Math.min(p[3],y+h-ay);rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');});
 }
 
 function pixelTree(x,y,sc){
   sc=sc||1;var s=Math.max(1,Math.round(sc)),tw=6*s,tx=x-tw/2;
   rect(tx,y,tw,24*s,'#5a3010');rect(tx+1,y,tw-2,24*s,'#7a4818');
-  rect(tx-3,y+20*s,4,4,'#5a3010');rect(tx+tw-1,y+20*s,4,4,'#5a3010');
-  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828'],[x+2*s,y-19*s,4*s,4*s,'#62b02e']].forEach(function(l){var hw=Math.floor(l[2]/2);for(var row=0;row<l[3];row++){var b=Math.sin((row/l[3])*Math.PI),rw=Math.max(1,Math.round(l[2]*b));rect(l[0]-hw+Math.round((l[2]-rw)/2),l[1]+row,rw,1,l[4]);}});
+  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828']].forEach(function(l){var hw=Math.floor(l[2]/2);for(var row=0;row<l[3];row++){var b=Math.sin((row/l[3])*Math.PI),rw=Math.max(1,Math.round(l[2]*b));rect(l[0]-hw+Math.round((l[2]-rw)/2),l[1]+row,rw,1,l[4]);}});
 }
 
 function pixelBush(x,y,c1,c2,c3){
   c1=c1||'#2a5010';c2=c2||'#3a6818';c3=c3||'#4a8020';
-  rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);
+  rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);
+  rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);
 }
 
 function stoneArch(x,y,w,h){
-  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
+  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');
+  stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
   var cy2=y+h;
   for(var i=0;i<w-16;i++){var t=(i/(w-16))*Math.PI,ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}
 }
 
 function pixelHouse(x,y,w,h){
   w=w||50;h=h||40;
-  stoneTile(x,y+Math.round(h*0.3),w,Math.round(h*0.7));
-  var rh=Math.round(h*0.4);
-  for(var row=0;row<rh;row++){var sh=row/rh;rect(x+row,y+row,w-row*2,1,'rgb('+Math.round(160-sh*60)+','+Math.round(60-sh*20)+',10)');}
-  rect(x+8,y+Math.round(h*0.45),10,8,'#1a2030');hline(x+8,y+Math.round(h*0.45),10,'#a09070');
-  rect(x+Math.round(w*0.4),y+Math.round(h*0.65),Math.round(w*0.2),Math.round(h*0.35),'#3a1c08');
+  // Wall
+  stoneTile(x,y+Math.round(h*0.4),w,Math.round(h*0.6));
+  // Roof — triangle shape, wide at bottom, peaked at top
+  var rh=Math.round(h*0.45);
+  for(var row=0;row<rh;row++){
+    var sh=row/rh; // 0 at top, 1 at bottom
+    var rw=Math.round(w*sh); // narrow at top, wide at bottom
+    var rx=x+Math.round((w-rw)/2);
+    rect(rx,y+row,rw,1,'rgb('+Math.round(160-sh*60)+','+Math.round(60-sh*20)+',10)');
+  }
+  // Window
+  rect(x+8,y+Math.round(h*0.5),10,8,'#1a2030');
+  hline(x+8,y+Math.round(h*0.5),10,'#a09070');
+  // Door
+  rect(x+Math.round(w*0.4),y+Math.round(h*0.72),Math.round(w*0.2),Math.round(h*0.28),'#3a1c08');
 }
 
 function pixelWater(x,y,w,h){
@@ -315,9 +380,8 @@ function pixelNPC(x,y,emoji){
   cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);
 }
 
-function pixelPlayer(px,py,frame,dir){
-  dir=dir||1;
-  cx.save();if(dir===-1){cx.translate(Math.round(px)*2,0);cx.scale(-1,1);}
+function pixelPlayer(px,py,frame,scale){
+  scale=scale||1;
   var tmp=document.createElement('canvas');tmp.width=32;tmp.height=48;
   var t=tmp.getContext('2d');t.imageSmoothingEnabled=false;
   var skin='#8B5E3C',hair='#1a0e00',tunic='#c03060',legs='#5a3472',boot='#2a1800',gold='#e8a020';
@@ -342,20 +406,106 @@ function pixelPlayer(px,py,frame,dir){
   r(9+legB,30+bob,6,7,legs);r(17+legA,30+bob,6,7,legs);
   r(8+legB,36+bob,7,4,boot);r(17+legA,36+bob,7,4,boot);
   r(26,18+bob,3,10,'#909090');r(24,18+bob,7,3,gold);
-  cx.drawImage(tmp,Math.round(px)-16,Math.round(py)-40);cx.restore();
+  // Draw scaled onto main canvas
+  var dw=Math.round(32*scale), dh=Math.round(48*scale);
+  cx.drawImage(tmp, Math.round(px)-dw/2, Math.round(py)-dh, dw, dh);
+}
+
+// ── Town gate scene ────────────────────────────────────────────────────
+function drawGateScene(W,H){
+  // Sky — warm afternoon
+  for(var i=0;i<Math.round(H*0.55);i++){var d=i/(H*0.55);rect(0,i,W,1,'rgb('+Math.round(120+d*20)+','+Math.round(176+d*16)+','+Math.round(208+d*8)+')');}
+  // Ground
+  for(var i=0;i<Math.round(H*0.45);i++){var d=i/(H*0.45);rect(0,Math.round(H*0.55)+i,W,1,'rgb('+Math.round(30+d*25)+','+Math.round(65+d*45)+','+Math.round(15+d*12)+')');}
+  // Path leading to gate — beige cobblestone continuing through gate
+  var pathY=H*0.78;
+  cx.fillStyle='#b0986a';
+  cx.beginPath();
+  cx.moveTo(0,H); cx.lineTo(W,H);
+  cx.lineTo(W*0.58,pathY); cx.lineTo(W*0.42,pathY);
+  cx.fill();
+  // Path continues through gate opening (narrows to vanishing point)
+  cx.fillStyle='#c8ae82';
+  cx.beginPath();
+  cx.moveTo(W*0.42,pathY); cx.lineTo(W*0.58,pathY);
+  cx.lineTo(W*0.52,H*0.55); cx.lineTo(W*0.48,H*0.55);
+  cx.fill();
+  // Cobble lines
+  for(var i=0;i<5;i++){
+    var t=i/5, y2=H+(pathY-H)*t;
+    var lx=(W*0.42)*t, rx=W-(W*0.42)*t;
+    hline(Math.round(lx),Math.round(y2),Math.round(rx-lx),'#786040');
+  }
+  // Trees flanking path
+  pixelTree(W*0.12,H*0.72,1.6); pixelTree(W*0.88,H*0.70,1.5);
+  pixelTree(W*0.22,H*0.65,1.2); pixelTree(W*0.78,H*0.63,1.1);
+  pixelBush(W*0.18,H*0.75); pixelBush(W*0.82,H*0.74);
+
+  // ── Gate ──────────────────────────────────────────────────────────
+  var gx=W*0.28, gy=H*0.15, gw=W*0.44, gh=H*0.5;
+  var pillarW=Math.round(gw*0.12);
+
+  // Left pillar
+  stoneTile(gx, gy+gh*0.1, pillarW, gh*0.9, '#b0a888','#8a8070','#5a5048');
+  // Right pillar
+  stoneTile(gx+gw-pillarW, gy+gh*0.1, pillarW, gh*0.9, '#b0a888','#8a8070','#5a5048');
+  // Pillar caps
+  stoneTile(gx-2, gy+gh*0.06, pillarW+4, gh*0.06, '#c0b090','#a09070','#706050');
+  stoneTile(gx+gw-pillarW-2, gy+gh*0.06, pillarW+4, gh*0.06, '#c0b090','#a09070','#706050');
+  // Arch — just the curved stone top border, no fill
+  var archX=gx+pillarW, archY=gy, archW=gw-pillarW*2, archH=gh*0.55;
+  for(var i=0;i<archW;i++){
+    var t2=(i/archW)*Math.PI;
+    var ah=Math.round(Math.sin(t2)*archH*0.7);
+    var ay2=archY+archH-ah;
+    // Only draw the top few pixels of the arch — the border, not fill
+    stoneTile(archX+i, ay2, 1, 6, '#9a9080','#7a7068','#5a5048');
+  }
+  // Solid top bar connecting pillars
+  stoneTile(archX, archY, archW, Math.round(archH*0.25), '#9a9080','#7a7068','#5a5048');
+
+  // Gate text — "MAPLEHAVEN"
+  cx.save();
+  cx.fillStyle='rgba(10,6,0,0.7)';
+  rect(gx+pillarW+2, gy+archH*0.22, archW-4, archH*0.28, 'rgba(10,6,0,0.5)');
+  cx.fillStyle='#e8c040';
+  var fs=Math.max(5,Math.round(archW*0.09));
+  cx.font=fs+"px 'Press Start 2P',monospace";
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText('MAPLEHAVEN', gx+gw/2, gy+archH*0.36);
+  cx.restore();
+
+  // Torches on pillars
+  rect(gx+pillarW-3, gy+gh*0.3, 4, 8, '#5a3000');
+  rect(gx+pillarW-4, gy+gh*0.26, 6, 5, '#c84010');
+  rect(gx+pillarW-3, gy+gh*0.24, 4, 4, '#ffa020');
+  rect(gx+gw-pillarW-1, gy+gh*0.3, 4, 8, '#5a3000');
+  rect(gx+gw-pillarW-2, gy+gh*0.26, 6, 5, '#c84010');
+  rect(gx+gw-pillarW-1, gy+gh*0.24, 4, 4, '#ffa020');
+  // Torch glow
+  cx.save();cx.globalAlpha=0.12;
+  var g1=cx.createRadialGradient(gx+pillarW-1,gy+gh*0.27,0,gx+pillarW-1,gy+gh*0.27,18);
+  g1.addColorStop(0,'#ff8020');g1.addColorStop(1,'rgba(255,128,32,0)');
+  cx.fillStyle=g1;cx.fillRect(gx+pillarW-19,gy+gh*0.09,38,38);
+  var g2=cx.createRadialGradient(gx+gw-pillarW+1,gy+gh*0.27,0,gx+gw-pillarW+1,gy+gh*0.27,18);
+  g2.addColorStop(0,'#ff8020');g2.addColorStop(1,'rgba(255,128,32,0)');
+  cx.fillStyle=g2;cx.fillRect(gx+gw-pillarW-19,gy+gh*0.09,38,38);
+  cx.restore();
 }
 
 // ── Scenes ─────────────────────────────────────────────────────────────
 var SCENES={
   intro:function(W,H){
+    // Dawn sky
     for(var i=0;i<Math.round(H*0.5);i++){var d=i/(H*0.5);rect(0,i,W,1,'rgb('+Math.round(80+d*80)+','+Math.round(60+d*80)+','+Math.round(120+d*60)+')');}
     cx.save();var sg=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.4);sg.addColorStop(0,'rgba(255,220,120,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');cx.fillStyle=sg;cx.fillRect(0,0,W,H);cx.restore();
     [[W*0.0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.12);rect(m[0]+i,m[1]-mh,1,mh+H*0.2,m[3]);}});
     for(var i=0;i<Math.round(H*0.52);i++){var d=i/(H*0.52);rect(0,Math.round(H*0.48)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(55+d*35)+','+Math.round(20+d*10)+')');}
-    cobblePath(W*0.35,H*0.5,W*0.3,H*0.5);
-    pixelTree(W*0.08,H*0.66,1.9);pixelTree(W*0.88,H*0.62,1.7);pixelTree(W*0.72,H*0.68,1.4);
-    [[W*0.2,H*0.62,'#e060a0'],[W*0.28,H*0.7,'#ffff60'],[W*0.58,H*0.65,'#e060a0'],[W*0.65,H*0.72,'#60c8e0']].forEach(function(f){rect(f[0],f[1],1,4,'#40780a');rect(f[0]-2,f[1],5,4,f[2]);});
-    cx.save();cx.fillStyle='rgba(10,6,0,0.55)';cx.fillRect(W*0.1,H*0.14,W*0.8,H*0.22);cx.strokeStyle='#c8a040';cx.lineWidth=1;cx.strokeRect(W*0.1,H*0.14,W*0.8,H*0.22);cx.fillStyle='#e8c040';cx.font=Math.round(W*0.038)+"px 'Press Start 2P',monospace";cx.textAlign='center';cx.textBaseline='middle';    cx.fillText("THE WANDERER'S PATH",W*0.5,H*0.26);cx.restore();
+    // Trees
+    pixelTree(W*0.08,H*0.66,1.9);pixelTree(W*0.88,H*0.62,1.7);
+    pixelBush(W*0.18,H*0.75);pixelBush(W*0.82,H*0.74);
+    // Gate
+    drawGateScene(W,H);
   },
   village:function(W,H){
     for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(120+d*20)+','+Math.round(176+d*16)+','+Math.round(208+d*8)+')');}
@@ -385,7 +535,7 @@ var SCENES={
     cx.save();['rgba(100,180,60,0.06)','rgba(120,200,70,0.04)','rgba(80,160,50,0.05)'].forEach(function(c,i){cx.fillStyle=c;cx.beginPath();var bx=W*(0.25+i*0.2);cx.moveTo(bx-5,0);cx.lineTo(bx-30,H);cx.lineTo(bx+30,H);cx.lineTo(bx+5,0);cx.fill();});cx.restore();
     cobblePath(0,H*0.55,W,H*0.45);
     [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(function(f){pixelTree(W*f[0],H*f[1],f[2]);});
-    [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(function(m){rect(m[0]-2,m[1]-2,4,6,'#c0b888');rect(m[0]-5,m[1]-4,10,4,m[2]);rect(m[0]-3,m[1]-5,6,3,m[2]);rect(m[0]-2,m[1]-4,2,2,'rgba(255,255,220,0.6)');});
+    [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(function(m){rect(m[0]-2,m[1]-2,4,6,'#c0b888');rect(m[0]-5,m[1]-4,10,4,m[2]);rect(m[0]-3,m[1]-5,6,3,m[2]);});
     pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
     pixelNPC(W*0.5,H*0.63,'🦊');
   },
@@ -422,12 +572,46 @@ function renderScene(){
   var draw=SCENES[S.scene]||SCENES.village;
   draw(PW,PH);
   tickChar();
-  var wf=charState!=='idle'?Math.floor(af/5)%4:0;
-  pixelPlayer(charX,PH*0.72,wf,charDir);
-  af++;requestAnimationFrame(renderScene);
+  var walking=charState!=='idle';
+  var wf=walking?Math.floor(af/5)%4:0;
+  pixelPlayer(charX, Math.round(charY*PH), wf, charScale);
+  if(catVisible) drawCat(catX, catY);
+  af++;
+  requestAnimationFrame(renderScene);
 }
 
-// ── Story nodes ────────────────────────────────────────────────────────
+// ── Cat overlay ────────────────────────────────────────────────────────
+var catVisible=false, catX=0, catY=0, catTimer=null;
+
+function showCat(){
+  // Place cat near the player's feet in the village
+  catX=Math.round(PW/2)+18;
+  catY=Math.round(0.72*PH)+2;
+  catVisible=true;
+  if(catTimer)clearTimeout(catTimer);
+  catTimer=setTimeout(function(){catVisible=false;},4000);
+}
+
+function drawCat(x,y){
+  var c=cx;
+  // body
+  c.fillStyle='#c8a060';c.fillRect(x,y-4,10,7);
+  // head
+  c.fillStyle='#c8a060';c.fillRect(x+6,y-9,8,7);
+  // ears
+  c.fillStyle='#c8a060';c.fillRect(x+6,y-12,3,4);c.fillRect(x+10,y-12,3,4);
+  c.fillStyle='#e8b8a0';c.fillRect(x+7,y-11,2,3);c.fillRect(x+11,y-11,2,3);
+  // eye
+  c.fillStyle='#1a1000';c.fillRect(x+8,y-7,2,1);c.fillRect(x+12,y-7,2,1);
+  // nose
+  c.fillStyle='#e07070';c.fillRect(x+10,y-5,2,1);
+  // tail
+  c.fillStyle='#c8a060';c.fillRect(x-4,y-2,5,2);c.fillRect(x-5,y-5,2,4);
+  // stripes
+  c.fillStyle='#a07840';c.fillRect(x+2,y-3,1,5);c.fillRect(x+5,y-3,1,5);
+  // legs
+  c.fillStyle='#b89050';c.fillRect(x+1,y+2,2,3);c.fillRect(x+4,y+2,2,3);c.fillRect(x+7,y+2,2,3);
+}
 var STORY={
   start:{scene:'village',lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],event:'none',choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
   village_market:{scene:'village',lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],event:'none',choices:[{text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},{text:"B) Browse for something else",next:'market_browse'},{text:"C) Head to the tavern instead",next:'tavern_arrive'}]},
@@ -449,11 +633,11 @@ var STORY={
   forest_mushrooms:{scene:'forest',lines:["You find a cluster of plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful. You gather a generous handful."],event:'loot',xpGain:8,itemGained:'mushroom',choices:[{text:"A) Look for the talking fox",next:'forest_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
   forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],event:'loot',xpGain:25,itemGained:'map fragment',choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village with this news",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
   village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
-  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]},
+  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
 };
 
 // ── UI ─────────────────────────────────────────────────────────────────
-var EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️','fish':'🐟','key':'🗝️'};
+var EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️'};
 
 function updateStats(){
   document.getElementById('hptx').textContent=S.hp+'/'+S.maxHp;
@@ -461,48 +645,33 @@ function updateStats(){
   document.getElementById('xptx').textContent=S.xp;
   document.getElementById('bxp').style.width=Math.min(100,S.xp%100)+'%';
   document.getElementById('gtx').textContent=S.gold;
-  document.getElementById('loctx').textContent=S.scene==='intro'?'the road':S.scene;
+  document.getElementById('loctx').textContent=S.scene==='intro'||S.scene==='gate'?'the road':S.scene;
   var sl=document.getElementById('islots');sl.innerHTML='';
-  for(var i=0;i<8;i++){var d=document.createElement('div');d.className='isl';d.textContent=S.inv[i]?(EMOJIS[S.inv[i].toLowerCase()]||'📦'):'·';if(S.inv[i])d.title=S.inv[i];sl.appendChild(d);}
+  for(var i=0;i<8;i++){var d=document.createElement('div');d.className='isl';d.textContent=S.inv[i]?(EMOJIS[S.inv[i]]||'📦'):'·';if(S.inv[i])d.title=S.inv[i];sl.appendChild(d);}
 }
 
-function log(text,cls){
+function logLine(text,cls){
   var b=document.getElementById('log'),d=document.createElement('div');
   d.className='ll'+(cls?' '+cls:'');d.textContent=text;
   b.appendChild(d);b.scrollTop=b.scrollHeight;
   if(b.children.length>80)b.removeChild(b.children[0]);
 }
 
-var soundOn=true;
-function toggleSound(){
-  soundOn=!soundOn;
-  document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
-  if(!soundOn){
-    if(ambientAudio){ambientAudio.pause();}
-    if(footstepAudio){footstepAudio.pause();}
-    if(lobbyMusic){lobbyMusic.pause();}
-  }else{
-    if(ambientAudio){ambientAudio.play().catch(function(){});}
-    if(footstepAudio){footstepAudio.play().catch(function(){});}
-    if(lobbyMusic){lobbyMusic.play().catch(function(){});}
-  }
-}
-
+var skipTypewriter=false;
 function showSkipBtn(onSkip){
   var inn=document.getElementById('cinn');
-  inn.innerHTML='<button class="cb" style="flex:none;opacity:0.7" id="skipbtn" onclick="skipNow()">▶▶ SKIP</button>';
+  inn.innerHTML='<button class="cb" style="flex:none;opacity:0.7" onclick="skipNow()">▶▶ SKIP</button>';
   window._skipCb=onSkip;
 }
 function skipNow(){
   skipTypewriter=true;
-  // Stop current narration
   if(curAudio){curAudio.pause();curAudio=null;}
-  var btn=document.getElementById('skipbtn');if(btn)btn.remove();
+  var btn=document.querySelector('#cinn .cb');if(btn)btn.remove();
   if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
 function hideSkipBtn(){
   skipTypewriter=false;
-  var btn=document.getElementById('skipbtn');if(btn)btn.remove();
+  var btn=document.querySelector('#cinn .cb[onclick="skipNow()"]');if(btn)btn.remove();
 }
 
 function typewriterLog(text,cls,onDone){
@@ -517,18 +686,15 @@ function typewriterLog(text,cls,onDone){
   },28);
 }
 
-function typewriterLines(lines,cls,onDone,soundTriggers){
+function typewriterLines(lines,cls,onDone,triggers){
   skipTypewriter=false;
-  soundTriggers=soundTriggers||{};
+  triggers=triggers||{};
   var i=0;
   function next(){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
-    var idx=i;
-    var line=lines[i++];
-    // Speak this line as it starts typing
+    var idx=i, line=lines[i++];
     speak(line);
-    // Trigger any sound effect for this line index
-    if(soundTriggers[idx])setTimeout(soundTriggers[idx],300);
+    if(triggers[idx])setTimeout(triggers[idx],400);
     typewriterLog(line,cls,function(){setTimeout(next,120);});
   }
   showSkipBtn(function(){
@@ -547,7 +713,6 @@ function typewriterLines(lines,cls,onDone,soundTriggers){
 }
 
 function setSt(msg){document.getElementById('cinn').innerHTML='<span id="stxt">'+msg+'</span>';}
-
 function renderChoices(choices){
   var inn=document.getElementById('cinn');inn.innerHTML='';
   choices.forEach(function(c){
@@ -555,13 +720,20 @@ function renderChoices(choices){
     b.onclick=function(){onChoice(c.next);};inn.appendChild(b);
   });
 }
-
 function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disabled=true;});}
 
 // ── Story engine ───────────────────────────────────────────────────────
-function goToNode(nodeId){
-  var node=STORY[nodeId];if(!node){log('[The path ends here...]','s');return;}
-  // Apply stat changes immediately (hp, xp, gold) but hold item until after narration
+function buildTriggers(lines){
+  var t={};
+  lines.forEach(function(line,i){
+    var l=line.toLowerCase();
+    if(/\bcat\b|kitten|meow|purr/.test(l)) t[i]=function(){playCatMeow();showCat();};
+    if(/\bbird|chirp|sparrow|robin/.test(l)) t[i]=sndBird;
+  });
+  return t;
+}
+
+function runNode(node){
   if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
   if(node.xpGain)S.xp+=node.xpGain;
   if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
@@ -570,84 +742,85 @@ function goToNode(nodeId){
   else if((node.goldChange||0)>0)sndCoin();
   else if(node.event==='rest')sndHeal();
   else if(node.event==='encounter'&&(node.hpChange||0)<0)sndBump();
-  narrativeSounds(node.lines);
   var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
-  var finish=function(){
-    // Start narration voice at same time as typewriter
-    speak(node.lines.join(' '));
-    typewriterLines(node.lines,cls,function(){
-      // Add item to inventory only after story text finishes
-      if(node.itemGained&&S.inv.length<8){
-        S.inv.push(node.itemGained);
-        updateStats();
-        sndPickup();
-      }
-      if(S.hp<=0){
-        typewriterLog('💤 You collapse gently in the grass... what a journey!','s',function(){
-          document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
-        });return;
-      }
-      renderChoices(node.choices);
-    });
-  };
-  animateWalkOut(node.scene,finish);
-}
-
-function onChoice(nextId){disableCh();setSt('▸ Walking...');goToNode(nextId);}
-
-function startGame(){
-  stopLobbyMusic();
-  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
-  S.scene='intro';
-  charX=-20;charState='walkin';
-  updateStats();
-  document.getElementById('log').innerHTML='';
-  log('Welcome to Maplehaven, Wanderer. ✦','s');
-  pendingScene='village';
-  pendingCallback=function(){
-    S.scene='village';
-    playAmbient('village');
-    goToNodeNoWalk('start');
-  };
-}
-
-// Like goToNode but skips the walk animation (scene already set)
-function goToNodeNoWalk(nodeId){
-  var node=STORY[nodeId];if(!node)return;
-  if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
-  if(node.xpGain)S.xp+=node.xpGain;
-  if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
-  updateStats();
-  if(node.event==='rest')sndHeal();
-  narrativeSounds(node.lines);
-  var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
-  speak(node.lines.join(' '));
+  var triggers=buildTriggers(node.lines);
   typewriterLines(node.lines,cls,function(){
     if(node.itemGained&&S.inv.length<8){S.inv.push(node.itemGained);updateStats();sndPickup();}
     if(S.hp<=0){
-      typewriterLog('💤 You collapsed gently...','s',function(){
+      typewriterLog('💤 You collapse gently in the grass... what a journey!','s',function(){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
       });return;
     }
     renderChoices(node.choices);
+  },triggers);
+}
+
+function goToNode(nodeId){
+  var node=STORY[nodeId];if(!node){logLine('[The path ends here...]','s');return;}
+  // If same scene, just run node
+  if(node.scene===S.scene){
+    runNode(node);
+    return;
+  }
+  // Different scene — walk out, set new scene, walk in, then run
+  setSt('▸ Walking...');
+  walkOut(node.scene, function(){
+    S.scene=node.scene; updateStats();
+    runNode(node);
+  });
+}
+
+function onChoice(nextId){disableCh();goToNode(nextId);}
+
+// ── Start sequence ─────────────────────────────────────────────────────
+function startGame(){
+  stopLobby(function(){
+    S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
+    S.scene='intro';
+    charX=PW/2; charY=0.88; charScale=1;
+    charState='idle';
+    updateStats();
+    document.getElementById('log').innerHTML='';
+    logLine('You approach the gates of Maplehaven...','s');
+    setAmbient('village');
+    setSt('▸ Walking...');
+    setTimeout(function(){
+      walkUpToGate(function(){
+        stopSteps();
+        S.scene='village';
+        charX=-20; charY=0.72; charScale=1;
+        charState='walkin';
+        startSteps();
+        pendingCb=function(){
+          stopSteps();
+          runNode(STORY['start']);
+        };
+      });
+    },400);
   });
 }
 
 window.onload=function(){
   resizeCanvas();window.addEventListener('resize',resizeCanvas);
   renderScene();updateStats();
-  log('Welcome, Wanderer. ✦','s');
-  // Start lobby music immediately on page load
-  // Most browsers block autoplay, so we also retry on first interaction
-  lobbyMusic=new Audio(LOBBY_URL);
-  lobbyMusic.loop=true;lobbyMusic.volume=0.5;
-  lobbyMusic.play().catch(function(){
-    // Autoplay blocked — start on first click
-    document.addEventListener('click',function tryPlay(){
-      if(lobbyMusic){lobbyMusic.play().catch(function(){});}
-      document.removeEventListener('click',tryPlay);
-    },{once:true});
+  logLine('Welcome, Wanderer. ✦','s');
+
+  // Try autoplay immediately
+  lobby=new Audio(LOBBY_URL);
+  lobby.loop=true; lobby.volume=0.5;
+  lobby.play().catch(function(){
+    // Blocked — play on very first interaction (click, key, or touch)
+    function unlockAudio(){
+      if(lobby) lobby.play().catch(function(){});
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    }
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
   });
+
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
 };
 </script>
