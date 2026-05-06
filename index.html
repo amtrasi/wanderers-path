@@ -78,7 +78,7 @@ const AMBIENT_URLS={
 };
 const DOOR_URL  = BASE+'460542__coosemek__door-creak.wav';
 const MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
-const LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.flac';
+const LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 const STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
 const XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
 const XI_VOICE  = 'N2lVS1w4EtoT3dr4eOWO';
@@ -535,10 +535,10 @@ function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disa
 // ── Story engine ───────────────────────────────────────────────────────
 function goToNode(nodeId){
   var node=STORY[nodeId];if(!node){log('[The path ends here...]','s');return;}
+  // Apply stat changes immediately (hp, xp, gold) but hold item until after narration
   if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
   if(node.xpGain)S.xp+=node.xpGain;
   if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
-  if(node.itemGained&&S.inv.length<8)S.inv.push(node.itemGained);
   updateStats();
   if(node.event==='loot')sndPickup();
   else if((node.goldChange||0)>0)sndCoin();
@@ -547,7 +547,15 @@ function goToNode(nodeId){
   narrativeSounds(node.lines);
   var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
   var finish=function(){
+    // Start narration voice at same time as typewriter
+    speak(node.lines.join(' '));
     typewriterLines(node.lines,cls,function(){
+      // Add item to inventory only after story text finishes
+      if(node.itemGained&&S.inv.length<8){
+        S.inv.push(node.itemGained);
+        updateStats();
+        sndPickup();
+      }
       if(S.hp<=0){
         typewriterLog('💤 You collapse gently in the grass... what a journey!','s',function(){
           document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
@@ -555,7 +563,6 @@ function goToNode(nodeId){
       }
       renderChoices(node.choices);
     });
-    speak(node.lines.join(' '));
   };
   animateWalkOut(node.scene,finish);
 }
