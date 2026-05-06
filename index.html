@@ -16,7 +16,12 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 .tbtn:hover{border-color:#e8c040;color:#e8c040;}
 #scene-wrap{position:relative;width:100%;line-height:0;}
 #scene{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
-#press-overlay{position:fixed;inset:0;background:rgba(10,6,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:1000;}
+#pause-overlay{display:none;position:fixed;inset:0;background:rgba(10,6,0,0.92);flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+#pause-overlay.show{display:flex;}
+#pause-overlay h2{color:#e8c040;font-size:11px;letter-spacing:2px;text-shadow:0 0 12px #e8c04088;margin-bottom:8px;}
+#pause-overlay p{color:#a08030;font-size:6px;letter-spacing:1px;margin-bottom:16px;}
+.povbtn{background:#0e0c04;border:2px solid #7a6030;color:#c8a840;font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 20px;cursor:pointer;min-width:180px;text-align:center;}
+.povbtn:hover{border-color:#e8c040;color:#e8c040;background:#2a2008;}
 #press-overlay p{color:#e8c040;font-size:9px;letter-spacing:2px;text-shadow:0 0 12px #e8c04088;white-space:nowrap;animation:blink 1.2s step-end infinite;}
 @keyframes blink{50%{opacity:0;}}
 #hud{position:absolute;top:6px;left:6px;background:#1a1208ee;border:2px solid #7a6030;padding:6px 8px;font-size:7px;color:#a08030;min-width:110px;}
@@ -50,7 +55,12 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 </style>
 </head>
 <body>
-<div id="press-overlay" onclick="unlockAndStart()">
+<div id="pause-overlay">
+  <h2>⏸ PAUSED</h2>
+  <p>You wandered away for a moment...</p>
+  <button class="povbtn" onclick="resumeGame()">▸ RESUME</button>
+  <button class="povbtn" style="margin-top:8px;border-color:#5a4020;color:#806020;" onclick="returnHome()">⌂ RETURN TO START</button>
+</div>
   <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
   <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
     Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
@@ -96,7 +106,7 @@ var AMBIENT={
 };
 var AVOL={village:0.15,river:0.12,tavern:0.18,forest:0.2,meadow:0.22};
 var DOOR_URL =BASE+'460542__coosemek__door-creak.wav';
-var MEOW_URL =BASE+'528197__fthgurdy__cat-meow-1.wav';
+var MEOW_URL =BASE+'hazel-meow.m4a';
 var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL=BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var BARD_URL =BASE+'769807__soundsandrebounds__shakespeare-lover-and-his-lass-lute-and-wood-flute.wav';
@@ -173,8 +183,8 @@ function sndBird(){
 }
 function playCatMeow(){
   if(!soundOn)return;
-  try{var ctx=ac(),audio=new Audio(MEOW_URL);var src=ctx.createMediaElementSource(audio);var gain=ctx.createGain();gain.gain.value=3.5;src.connect(gain);gain.connect(ctx.destination);audio.play().catch(function(){});}
-  catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
+  try{var ctx=ac(),audio=new Audio(MEOW_URL);var src=ctx.createMediaElementSource(audio);var gain=ctx.createGain();gain.gain.value=0.4;src.connect(gain);gain.connect(ctx.destination);audio.play().catch(function(){});}
+  catch(e){var a=new Audio(MEOW_URL);a.volume=0.3;a.play().catch(function(){});}
 }
 function toggleSound(){
   soundOn=!soundOn;document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
@@ -463,8 +473,8 @@ function renderScene(){
 // visited{} tracks nodes already seen — returns alternate text on revisit
 var STORY={
   start:{scene:'village',
-    lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],
-    revisit:["You're back in the familiar square of Maplehaven.","The cat trots alongside you, content as ever."],
+    lines:["The cobblestones of Maplehaven are warm beneath your boots.","A tortoiseshell cat weaves between your legs and meows softly.","You notice a small red collar around her neck. The tag reads: Hazel.","The smell of fresh bread drifts from the bakery nearby."],
+    revisit:["You're back in the familiar square of Maplehaven.","Hazel trots alongside you, content as ever."],
     event:'none',
     choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
   village_market:{scene:'village',
@@ -496,16 +506,18 @@ var STORY={
     lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
     revisit:["The meadow is just as lovely as you remember.","The cat pounces at a butterfly, then looks back at you proudly."],
     event:'none',
-    choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}]},
+    choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}],
+    revisitChoices:[{text:"A) Follow the path to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
   meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for a moment — magical!"],revisit:["The meadow is already well-picked. Perhaps another time."],event:'loot',xpGain:8,itemGained:'flower bouquet',
     choices:[{text:"A) Continue to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
   meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into soft clover. The rabbit watches smugly.","But look — a gold coin in the grass!"],revisit:["The rabbit spots you and bolts immediately. It remembers."],event:'loot',xpGain:5,goldChange:3,
     choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go back to the village",next:'start'},{text:"C) Explore the forest",next:'forest_arrive'}]},
   river_arrive:{scene:'river',
     lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],
-    revisit:["The river is peaceful as ever.","The duck paddles past again — it recognises you now."],
+    revisit:["The river babbles peacefully. You know this spot well now.","The duck gives you a familiar nod."],
     event:'none',
-    choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}]},
+    choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}],
+    revisitChoices:[{text:"A) Sit and rest by the bank",next:'river_rest'},{text:"B) Cross into the forest",next:'forest_arrive'},{text:"C) Head back to the village",next:'start'}]},
   river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It glows faintly, as if it has never quite gone out."],revisit:["The spot under the bridge is empty now — just smooth stones.","The lantern is already safely in your pack."],event:'loot',xpGain:20,itemGained:'lantern',
     choices:[{text:"A) Head to the forest",next:'forest_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Rest by the river",next:'river_rest'}]},
   river_rest:{scene:'river',lines:["You sit on a mossy rock and let the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and restored."],event:'rest',hpChange:7,xpGain:5,
@@ -514,7 +526,8 @@ var STORY={
     lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, roots knotted like old friends.","Something rustles in the undergrowth nearby."],
     revisit:["The forest hushes as you enter once more.","The cat's ears prick up at every sound."],
     event:'none',
-    choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox',requires:'knows_fox'}]},
+    choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox',requires:'knows_fox'}],
+    revisitChoices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Head to the meadow",next:'meadow_arrive'}]},
   forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart pounds but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,
     choices:[{text:"A) Find the fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
   forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],revisit:["The mushrooms haven't grown back yet. Give them time."],event:'loot',xpGain:8,itemGained:'mushroom',
@@ -542,7 +555,10 @@ function renderInv(){
     var item=S.inv[start+i]||null;
     var d=document.createElement('div');d.className='isl';
     if(item){
-      d.innerHTML=(EMOJIS[item]||'📦')+'<span class="itip">'+item+'</span>';
+      var emoji=document.createTextNode(EMOJIS[item]||'📦');
+      d.appendChild(emoji);
+      var tip=document.createElement('span');tip.className='itip';tip.textContent=item;
+      d.appendChild(tip);
     } else {
       d.textContent='·';
     }
@@ -751,13 +767,10 @@ window.onload=function(){
       if(amb)amb.pause();
       if(bard)bard.pause();
       if(steps_)steps_.pause();
+      // Only show pause overlay if game has started (not on title screen)
+      if(S.scene!=='intro')document.getElementById('pause-overlay').classList.add('show');
     } else {
-      if(soundOn){
-        if(lobby)lobby.play().catch(function(){});
-        if(amb)amb.play().catch(function(){});
-        if(bard)bard.play().catch(function(){});
-        if(steps_)steps_.play().catch(function(){});
-      }
+      // Don't auto-resume — let user click Resume
     }
   });
 };
