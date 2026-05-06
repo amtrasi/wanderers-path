@@ -46,6 +46,7 @@
   <div id="topbar">
     <span id="title">✦ THE WANDERER'S PATH ✦</span>
     <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
+    <button class="tbtn" id="sbtn" onclick="toggleSound()">♫ SOUND: ON</button>
   </div>
   <div id="scene-wrap">
     <canvas id="scene"></canvas>
@@ -472,7 +473,20 @@ function log(text,cls){
   if(b.children.length>80)b.removeChild(b.children[0]);
 }
 
-var skipTypewriter=false;
+var soundOn=true;
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
+  if(!soundOn){
+    if(ambientAudio){ambientAudio.pause();}
+    if(footstepAudio){footstepAudio.pause();}
+    if(lobbyMusic){lobbyMusic.pause();}
+  }else{
+    if(ambientAudio){ambientAudio.play().catch(function(){});}
+    if(footstepAudio){footstepAudio.play().catch(function(){});}
+    if(lobbyMusic){lobbyMusic.play().catch(function(){});}
+  }
+}
 
 function showSkipBtn(onSkip){
   var inn=document.getElementById('cinn');
@@ -570,20 +584,53 @@ function goToNode(nodeId){
 function onChoice(nextId){disableCh();setSt('▸ Walking...');goToNode(nextId);}
 
 function startGame(){
-  stopLobbyMusic();
-  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.scene='intro';
-  charX=160;charState='idle';
+  // Start lobby music on first click (bypasses autoplay block)
+  startLobbyMusic();
+  // Give music a moment then fade it out and begin
+  setTimeout(function(){
+    stopLobbyMusic();
+    S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
+    S.scene='intro';
+    charX=-20;charState='walkin';
+    updateStats();
+    document.getElementById('log').innerHTML='';
+    log('Welcome to Maplehaven, Wanderer. ✦','s');
+    // Walk character in from left, then start story once centred
+    pendingScene='village';
+    pendingCallback=function(){
+      S.scene='village';
+      playAmbient('village');
+      goToNodeNoWalk('start');
+    };
+  },100);
+}
+
+// Like goToNode but skips the walk animation (scene already set)
+function goToNodeNoWalk(nodeId){
+  var node=STORY[nodeId];if(!node)return;
+  if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
+  if(node.xpGain)S.xp+=node.xpGain;
+  if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
   updateStats();
-  document.getElementById('log').innerHTML='';
-  log('Welcome to Maplehaven, Wanderer. ✦','s');
-  setTimeout(function(){animateWalkOut('village',function(){playAmbient('village');goToNode('start');});},400);
+  if(node.event==='rest')sndHeal();
+  narrativeSounds(node.lines);
+  var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
+  speak(node.lines.join(' '));
+  typewriterLines(node.lines,cls,function(){
+    if(node.itemGained&&S.inv.length<8){S.inv.push(node.itemGained);updateStats();sndPickup();}
+    if(S.hp<=0){
+      typewriterLog('💤 You collapsed gently...','s',function(){
+        document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
+      });return;
+    }
+    renderChoices(node.choices);
+  });
 }
 
 window.onload=function(){
   resizeCanvas();window.addEventListener('resize',resizeCanvas);
   renderScene();updateStats();
   log('Welcome, Wanderer. ✦','s');
-  startLobbyMusic();
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
 };
 </script>
