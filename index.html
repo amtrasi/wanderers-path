@@ -70,7 +70,7 @@
   <div id="inv-bar">
     <span class="ilbl">INVENTORY</span>
     <div id="islots" style="display:flex;gap:3px;"></div>
-    <span id="gld">🟡 <span id="gtx">5</span></span>
+    <span id="gld">🟡 <span id="gtx">5</span> gold</span>
   </div>
   <div id="log"></div>
   <div id="cbar"><div id="cinn"><span id="stxt">▸ Loading...</span></div></div>
@@ -91,7 +91,7 @@ var MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
 var LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
-var XI_VOICE  = 'N2lVS1w4EtoT3dr4eOWO';
+var XI_VOICE  = 'wo6udizrrtpIxWGp2qJk'; // Northern Terry
 
 // ── State ──────────────────────────────────────────────────────────────
 var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
@@ -597,12 +597,10 @@ function renderScene(){
 var catVisible=false, catX=0, catY=0, catTimer=null;
 
 function showCat(){
-  // Place cat near the player's feet in the village
   catX=Math.round(PW/2)+18;
   catY=Math.round(0.72*PH)+2;
   catVisible=true;
-  if(catTimer)clearTimeout(catTimer);
-  catTimer=setTimeout(function(){catVisible=false;},4000);
+  // No timer — cat stays on screen permanently once it appears
 }
 
 function drawCat(x,y){
