@@ -40,7 +40,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 #log::-webkit-scrollbar{width:3px;}
 #log::-webkit-scrollbar-thumb{background:#5a4020;}
 .ll{font-size:8px;line-height:1.9;color:#c8a840;margin-bottom:1px;}
-.ll.g{color:#60b840;}.ll.b{color:#c04030;}.ll.s{color:#e8c040;}
+.ll.dim{color:#606060;font-style:italic;}
 #cbar{background:#1a1208;border-top:2px solid #5a4020;padding:6px 8px;min-height:52px;display:flex;align-items:center;}
 #cinn{display:flex;flex-wrap:wrap;gap:5px;width:100%;}
 .cb{background:#0e0c04;border:2px solid #5a402088;color:#c8a840;font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 8px;cursor:pointer;flex:1;min-width:140px;text-align:left;line-height:1.6;}
@@ -379,8 +379,6 @@ function drawScene(W,H){
     stoneArch(W*0.3,H*0.52,45,18);
     pixelBush(W*0.22,H*0.65);pixelBush(W*0.48,H*0.6);pixelBush(W*0.74,H*0.72);
     rect(W*0.08,H*0.78,10,5,'#605850');rect(W*0.82,H*0.8,8,4,'#605850');
-    // NPCs drawn before player
-    pixelNPC(W*0.5,H*0.55,'🧙');pixelNPC(W*0.35,H*0.6,'👨‍🌾');
   } else if(sc==='meadow'){
     for(var i=0;i<Math.round(H*0.4);i++){var d=i/(H*0.4);rect(0,i,W,1,'rgb('+Math.round(128+d*16)+','+Math.round(196+d*12)+','+Math.round(232+d*8)+')');}
     [[W*0.1,18],[W*0.5,12],[W*0.75,20]].forEach(function(c){rect(c[0],c[1],22,5,'rgba(255,255,255,0.7)');rect(c[0]+4,c[1]-3,14,4,'rgba(255,255,255,0.6)');});
@@ -389,7 +387,6 @@ function drawScene(W,H){
     pixelTree(W*0.08,H*0.72,1.8);pixelTree(W*0.82,H*0.68,1.6);pixelTree(W*0.55,H*0.62,1.4);
     [[W*0.18,H*0.6,'#e060a0'],[W*0.25,H*0.72,'#e8e040'],[W*0.65,H*0.65,'#e060a0'],[W*0.72,H*0.75,'#60b8e0'],[W*0.42,H*0.58,'#e8e040']].forEach(function(f){rect(f[0],f[1],1,4,'#40780a');rect(f[0]-2,f[1],5,4,f[2]);dot(f[0],f[1],'#ffffa0');});
     pixelBush(W*0.2,H*0.65);pixelBush(W*0.68,H*0.7);
-    pixelNPC(W*0.55,H*0.55,'🧙');pixelNPC(W*0.2,H*0.58,'🐇');
   } else if(sc==='forest'){
     for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(8+d*12)+','+Math.round(18+d*30)+','+Math.round(8+d*12)+')');}
     cx.save();['rgba(100,180,60,0.06)','rgba(120,200,70,0.04)','rgba(80,160,50,0.05)'].forEach(function(c,i){cx.fillStyle=c;cx.beginPath();var bx=W*(0.25+i*0.2);cx.moveTo(bx-5,0);cx.lineTo(bx-30,H);cx.lineTo(bx+30,H);cx.lineTo(bx+5,0);cx.fill();});cx.restore();
@@ -397,7 +394,6 @@ function drawScene(W,H){
     [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(function(f){pixelTree(W*f[0],H*f[1],f[2]);});
     [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(function(m){rect(m[0]-2,m[1]-2,4,6,'#c0b888');rect(m[0]-5,m[1]-4,10,4,m[2]);rect(m[0]-3,m[1]-5,6,3,m[2]);});
     pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
-    pixelNPC(W*0.5,H*0.56,'🦊');
   } else if(sc==='tavern'){
     for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(18+d*8)+','+Math.round(10+d*6)+','+Math.round(2+d*2)+')');}
     stoneTile(0,0,W,H*0.5,'#6a6050','#4a4038','#3a3028');
@@ -411,7 +407,6 @@ function drawScene(W,H){
     [[W*0.06,'#801010'],[W*0.12,'#104888'],[W*0.18,'#106040'],[W*0.24,'#886010'],[W*0.30,'#481888']].forEach(function(b){rect(b[0],H*0.15,7,18,b[1]);rect(b[0]+1,H*0.13,5,4,'#888');rect(b[0]+1,H*0.16,2,6,'rgba(255,255,255,0.2)');});
     hline(W*0.04,H*0.34,W*0.35,'#7a5020');
     rect(W*0.08,H*0.38,10,10,'#a07828');rect(W*0.2,H*0.38,10,10,'#a07828');
-    pixelNPC(W*0.25,H*0.48,'🍺');pixelNPC(W*0.55,H*0.49,'🎶');
   } else if(sc==='river'){
     for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(96+d*16)+','+Math.round(152+d*16)+','+Math.round(192+d*8)+')');}
     for(var i=0;i<Math.round(H*0.12);i++){var d=i/(H*0.12);rect(0,Math.round(H*0.38)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(65+d*30)+','+Math.round(20+d*10)+')');}
@@ -421,7 +416,6 @@ function drawScene(W,H){
     pixelTree(W*0.06,H*0.68,1.6);pixelTree(W*0.84,H*0.65,1.7);
     pixelBush(W*0.22,H*0.5);pixelBush(W*0.7,H*0.48);
     [[W*0.18,H*0.47,'#e060a0'],[W*0.6,H*0.46,'#e8e040'],[W*0.38,H*0.48,'#60b8e0']].forEach(function(f){rect(f[0],f[1],1,4,'#408010');rect(f[0]-2,f[1],5,3,f[2]);});
-    pixelNPC(W*0.48,H*0.4,'🦆');
   }
 }
 
@@ -429,10 +423,33 @@ function renderScene(){
   cx.imageSmoothingEnabled=false;
   drawScene(PW,PH);
   tickChar();
-  // Draw cat BEFORE player so player is always on top
-  if(catVisible)drawCat(catX,catY);
   var wf=charState!=='idle'?Math.floor(af/5)%4:0;
-  pixelPlayer(charX,Math.round(charY*PH),wf,charScale);
+  var playerY=Math.round(charY*PH);
+  // Collect drawable objects with Y positions for painter's sort
+  var drawables=[];
+  // Cat
+  if(catVisible)drawables.push({y:catY,fn:function(){drawCat(catX,catY);}});
+  // Player
+  drawables.push({y:playerY,fn:function(){pixelPlayer(charX,playerY,wf,charScale);}});
+  // NPCs per scene (drawn with painter's algorithm)
+  var sc=S.scene;
+  if(sc==='village'){
+    drawables.push({y:Math.round(PH*0.55),fn:function(){pixelNPC(PW*0.5,PH*0.55,'🧙');}});
+    drawables.push({y:Math.round(PH*0.6),fn:function(){pixelNPC(PW*0.35,PH*0.6,'👨‍🌾');}});
+  } else if(sc==='meadow'){
+    drawables.push({y:Math.round(PH*0.55),fn:function(){pixelNPC(PW*0.55,PH*0.55,'🧙');}});
+    drawables.push({y:Math.round(PH*0.58),fn:function(){pixelNPC(PW*0.2,PH*0.58,'🐇');}});
+  } else if(sc==='forest'){
+    drawables.push({y:Math.round(PH*0.56),fn:function(){pixelNPC(PW*0.5,PH*0.56,'🦊');}});
+  } else if(sc==='tavern'){
+    drawables.push({y:Math.round(PH*0.48),fn:function(){pixelNPC(PW*0.25,PH*0.48,'🍺');}});
+    drawables.push({y:Math.round(PH*0.49),fn:function(){pixelNPC(PW*0.55,PH*0.49,'🎶');}});
+  } else if(sc==='river'){
+    drawables.push({y:Math.round(PH*0.4),fn:function(){pixelNPC(PW*0.48,PH*0.4,'🦆');}});
+  }
+  // Sort by Y and draw
+  drawables.sort(function(a,b){return a.y-b.y;});
+  drawables.forEach(function(d){d.fn();});
   af++;requestAnimationFrame(renderScene);
 }
 
@@ -483,7 +500,7 @@ var STORY={
     revisit:["The river is peaceful as ever.","The duck paddles past again — it recognises you now."],
     event:'none',
     choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}]},
-  river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It glows faintly, as if it has never quite gone out."],event:'loot',xpGain:20,itemGained:'lantern',
+  river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It glows faintly, as if it has never quite gone out."],revisit:["The spot under the bridge is empty now — just smooth stones.","The lantern is already safely in your pack."],event:'loot',xpGain:20,itemGained:'lantern',
     choices:[{text:"A) Head to the forest",next:'forest_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Rest by the river",next:'river_rest'}]},
   river_rest:{scene:'river',lines:["You sit on a mossy rock and let the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and restored."],event:'rest',hpChange:7,xpGain:5,
     choices:[{text:"A) Cross to the forest",next:'forest_arrive'},{text:"B) Head back to the village",next:'start'},{text:"C) Go to the meadow",next:'meadow_arrive'}]},
@@ -518,7 +535,11 @@ function renderInv(){
   for(var i=0;i<INV_PER_PAGE;i++){
     var item=S.inv[start+i]||null;
     var d=document.createElement('div');d.className='isl';
-    d.innerHTML=(item?(EMOJIS[item]||'📦')+'<span class="itip">'+(item||'')+'</span>':'·');
+    if(item){
+      d.innerHTML=(EMOJIS[item]||'📦')+'<span class="itip">'+item+'</span>';
+    } else {
+      d.textContent='·';
+    }
     sl.appendChild(d);
   }
   var total=S.inv.length,maxPage=Math.max(0,Math.ceil(total/INV_PER_PAGE)-1);
@@ -632,7 +653,18 @@ function runNode(node){
   var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
   var triggers=buildTriggers(node.lines);
   typewriterLines(node.lines,cls,function(){
-    if(node.itemGained)addItem(node.itemGained);
+    // Stat change lines — shown after story text
+    var stats=[];
+    if(node.hpChange&&node.hpChange>0)stats.push('+ '+node.hpChange+' HP restored');
+    if(node.hpChange&&node.hpChange<0)stats.push(node.hpChange+' HP lost');
+    if(node.xpGain&&node.xpGain>0)stats.push('+ '+node.xpGain+' XP gained');
+    if(node.goldChange&&node.goldChange>0)stats.push('+ '+node.goldChange+' gold coins found');
+    if(node.goldChange&&node.goldChange<0)stats.push(Math.abs(node.goldChange)+' gold coins spent');
+    stats.forEach(function(s){logLine(s,'dim');});
+    if(node.itemGained){
+      addItem(node.itemGained);
+      logLine('+ '+node.itemGained+' added to inventory','dim');
+    }
     if(S.hp<=0){
       typewriterLog('💤 You collapse gently in the grass... what a journey!','s',30,function(){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
@@ -648,8 +680,21 @@ function goToNode(nodeId){
   var node=STORY[nodeId];if(!node){logLine('[The path ends here...]','s');return;}
   // Use revisit text if already visited and revisit lines exist
   var isRevisit=S.visited[nodeId]&&node.revisit;
+  // For loot nodes with no revisit text, block re-collecting by skipping loot effects
+  var isLootRevisit=S.visited[nodeId]&&node.itemGained&&!node.revisit;
   S.visited[nodeId]=true;
-  var displayNode=isRevisit?Object.assign({},node,{lines:node.revisit,event:'none',itemGained:null,xpGain:0,goldChange:0,hpChange:0}):node;
+  var displayNode;
+  if(isLootRevisit){
+    // Show a neutral "nothing more here" message instead
+    displayNode=Object.assign({},node,{
+      lines:["You search around but find nothing new here."],
+      event:'none',itemGained:null,xpGain:0,goldChange:0,hpChange:0,revisit:null
+    });
+  } else if(isRevisit){
+    displayNode=Object.assign({},node,{lines:node.revisit,event:'none',itemGained:null,xpGain:0,goldChange:0,hpChange:0});
+  } else {
+    displayNode=node;
+  }
   if(node.scene===S.scene){runNode(displayNode);return;}
   setSt('▸ Walking...');
   walkOut(node.scene,function(){S.scene=node.scene;updateStats();runNode(displayNode);});
