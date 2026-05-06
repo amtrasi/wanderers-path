@@ -91,7 +91,7 @@ var MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
 var LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
-var XI_VOICE  = 'wo6udizrrtpIxWGp2qJk'; // Northern Terry
+var XI_VOICE  = 'WdZjiN0nNcik2LBjOHiv';
 
 // ── State ──────────────────────────────────────────────────────────────
 var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
@@ -235,7 +235,11 @@ async function speak(text, onDuration){
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
     });
-    if(!r.ok)return;
+    if(!r.ok){
+      var err=await r.json();
+      console.error('TTS error:',r.status,err);
+      return;
+    }
     var blob=await r.blob();
     var audio=new Audio(URL.createObjectURL(blob));
     curAudio=audio;
@@ -243,8 +247,8 @@ async function speak(text, onDuration){
       curDuration=audio.duration;
       if(onDuration) onDuration(audio.duration);
     });
-    audio.play().catch(function(){});
-  }catch(e){}
+    audio.play().catch(function(e){console.error('Audio play error:',e);});
+  }catch(e){console.error('TTS fetch error:',e);}
 }
 function toggleVoice(){
   voiceOn=!voiceOn;
