@@ -513,7 +513,7 @@ var STORY={
     choices:[{text:"A) Find the fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
   forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],event:'loot',xpGain:8,itemGained:'mushroom',
     choices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
-  forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
+  forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],revisit:["You wait in the clearing, but the fox does not return.","Only the rustling leaves and the distant sound of birdsong remain."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
     choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
   village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',
     choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
@@ -723,6 +723,22 @@ window.onload=function(){
   renderScene();updateStats();logLine('Welcome, Wanderer. ✦','s');
   document.addEventListener('keydown',function onKey(){unlockAndStart();document.removeEventListener('keydown',onKey);});
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
+  // Pause all audio when tab is hidden, resume only if soundOn
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      if(lobby)lobby.pause();
+      if(amb)amb.pause();
+      if(bard)bard.pause();
+      if(steps_)steps_.pause();
+    } else {
+      if(soundOn){
+        if(lobby)lobby.play().catch(function(){});
+        if(amb)amb.play().catch(function(){});
+        if(bard)bard.play().catch(function(){});
+        if(steps_)steps_.play().catch(function(){});
+      }
+    }
+  });
 };
 </script>
 </body>
