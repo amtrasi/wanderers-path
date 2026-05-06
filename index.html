@@ -468,7 +468,7 @@ var STORY={
     choices:[{text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},{text:"B) Browse for something else",next:'market_browse'},{text:"C) Head to the tavern instead",next:'tavern_arrive'}]},
   buy_cake:{scene:'village',lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],event:'loot',goldChange:-3,itemGained:'honey cake',
     choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Visit the sage",next:'village_sage'},{text:"C) Go to the tavern",next:'tavern_arrive'}]},
-  market_browse:{scene:'village',lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],event:'loot',xpGain:5,itemGained:'lucky acorn',
+  market_browse:{scene:'village',lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],revisit:["You search the crates but find nothing else of interest."],event:'loot',xpGain:5,itemGained:'lucky acorn',
     choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Go to the tavern",next:'tavern_arrive'},{text:"C) Head to the forest",next:'forest_arrive'}]},
   village_sage:{scene:'village',
     lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],
@@ -491,9 +491,9 @@ var STORY={
     revisit:["The meadow is just as lovely as you remember.","The cat pounces at a butterfly, then looks back at you proudly."],
     event:'none',
     choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}]},
-  meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for a moment — magical!"],event:'loot',xpGain:8,itemGained:'flower bouquet',
+  meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for a moment — magical!"],revisit:["The meadow is already well-picked. Perhaps another time."],event:'loot',xpGain:8,itemGained:'flower bouquet',
     choices:[{text:"A) Continue to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
-  meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into soft clover. The rabbit watches smugly.","But look — a gold coin in the grass!"],event:'loot',xpGain:5,goldChange:3,
+  meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into soft clover. The rabbit watches smugly.","But look — a gold coin in the grass!"],revisit:["The rabbit spots you and bolts immediately. It remembers."],event:'loot',xpGain:5,goldChange:3,
     choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go back to the village",next:'start'},{text:"C) Explore the forest",next:'forest_arrive'}]},
   river_arrive:{scene:'river',
     lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],
@@ -511,7 +511,7 @@ var STORY={
     choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox',requires:'knows_fox'}]},
   forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart pounds but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,
     choices:[{text:"A) Find the fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
-  forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],event:'loot',xpGain:8,itemGained:'mushroom',
+  forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],revisit:["The mushrooms haven't grown back yet. Give them time."],event:'loot',xpGain:8,itemGained:'mushroom',
     choices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
   forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],revisit:["You wait in the clearing, but the fox does not return.","Only the rustling leaves and the distant sound of birdsong remain."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
     choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
@@ -597,11 +597,14 @@ function typewriterLines(lines,cls,onDone,triggers){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-    speak(line,function(dur){
-      var mpc=Math.max(18,Math.round((dur*1000)/line.length));
-      typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
-    });
-    if(!voiceOn)typewriterLog(line,cls,30,function(){setTimeout(next,120);});
+    if(voiceOn){
+      speak(line,function(dur){
+        var mpc=Math.max(18,Math.round((dur*1000)/line.length));
+        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
+      });
+    } else {
+      typewriterLog(line,cls,30,function(){setTimeout(next,120);});
+    }
   }
   showSkipBtn(function(){
     skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
@@ -670,8 +673,15 @@ function runNode(node){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
       });return;
     }
-    var avail=node.choices.filter(function(c){return !c.requires||S.flags[c.requires];});
-    if(avail.length<2)avail=node.choices;
+    var avail=node.choices.filter(function(c){
+      if(c.requires&&!S.flags[c.requires])return false;
+      // Hide choices that lead to already-completed one-time nodes
+      var target=STORY[c.next];
+      if(target&&S.visited[c.next]&&target.itemGained&&!target.revisit)return false;
+      return true;
+    });
+    if(avail.length<2)avail=node.choices.filter(function(c){return !c.requires||S.flags[c.requires];});
+    if(avail.length<1)avail=node.choices;
     renderChoices(avail);
   },triggers);
 }
@@ -704,7 +714,7 @@ function onChoice(nextId){disableCh();goToNode(nextId);}
 function startGame(){
   stopLobby(function(){
     S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
-    invPage_=0;catVisible=false;catHistory=[];
+    invPage_=0;catVisible=false;catHistory=[];catX=160;catY=Math.round(0.72*PH);
     charX=PW/2;charY=0.88;charScale=1;charState='idle';
     updateStats();document.getElementById('log').innerHTML='';
     logLine('You approach the gates of Maplehaven...','s');
