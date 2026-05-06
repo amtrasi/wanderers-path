@@ -54,7 +54,7 @@
       <div class="hb"><div class="hbf" id="bhp" style="width:100%"></div></div>
       <div class="hr">XP <span class="hv" id="xptx">0</span></div>
       <div class="hb"><div class="hbf" id="bxp" style="width:0%"></div></div>
-      <div class="hr">📍<span class="hv" id="loctx">village</span></div>
+      <div class="hr">📍<span class="hv" id="loctx">???</span></div>
     </div>
   </div>
   <div id="inv-bar">
@@ -63,76 +63,154 @@
     <span id="gld">⬡ <span id="gtx">5</span></span>
   </div>
   <div id="log"></div>
-  <div id="cbar"><div id="cinn"><span id="stxt">▸ Loading world...</span></div></div>
+  <div id="cbar"><div id="cinn"><span id="stxt">▸ Loading...</span></div></div>
 </div>
 <script>
-// ── Constants ──────────────────────────────────────────────────────────
+// ── Constants & URLs ───────────────────────────────────────────────────
 const PW=320, PH=180;
-
-// ── Ambient audio ──────────────────────────────────────────────────────
+const BASE='https://amtrasi.github.io/wanderers-path/audio/';
 const AMBIENT_URLS={
-  village:'https://amtrasi.github.io/wanderers-path/audio/580150__dan_audiofile__birmingham-open-air-market.wav',
-  river:  'https://amtrasi.github.io/wanderers-path/audio/222752__minian89__babbling_brook_loop.wav',
-  tavern: 'https://amtrasi.github.io/wanderers-path/audio/695295__brunoboselli__pirate-tavern.wav',
-  forest: 'https://amtrasi.github.io/wanderers-path/audio/427400__imjeax__forest-ambient-loop.wav',
-  meadow: 'https://amtrasi.github.io/wanderers-path/audio/752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav',
+  village: BASE+'580150__dan_audiofile__birmingham-open-air-market.wav',
+  river:   BASE+'222752__minian89__babbling_brook_loop.wav',
+  tavern:  BASE+'695295__brunoboselli__pirate-tavern.wav',
+  forest:  BASE+'427400__imjeax__forest-ambient-loop.wav',
+  meadow:  BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav',
 };
-let ambientAudio=null, ambientScene=null, footstepAudio=null;
+const DOOR_URL  = BASE+'460542__coosemek__door-creak.wav';
+const MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
+const LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.flac';
+const STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
+const XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
+const XI_VOICE  = 'N2lVS1w4EtoT3dr4eOWO';
 
-const DOOR_CREAK_URL='https://amtrasi.github.io/wanderers-path/audio/460542__coosemek__door-creak.wav';
-const CAT_MEOW_URL='https://amtrasi.github.io/wanderers-path/audio/528197__fthgurdy__cat-meow-1.wav';
+// ── Game state ─────────────────────────────────────────────────────────
+const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
 
-function playDoorAndEnterTavern(){
-  // Play door creak, then fade in tavern ambience as if stepping inside
-  const door=new Audio(DOOR_CREAK_URL);
-  door.volume=0.9;
-  door.play().catch(()=>{});
-  // Start tavern audio very quietly while door creaks
-  const a=new Audio(AMBIENT_URLS.tavern);
-  a.loop=true;a.volume=0;
-  a.play().catch(()=>{});
-  // After creak (~1.2s), fade tavern up as if stepping inside
-  setTimeout(()=>fadeAudio(a,0,0.35,1200),1200);
-  // Set as current ambient
-  if(ambientAudio){const o=ambientAudio;o.pause();o.src='';}
-  ambientAudio=a;ambientScene='tavern';
-}
+// ── Audio helpers ──────────────────────────────────────────────────────
+let actx=null;
+function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
 
-function playCatMeow(){
-  try{
-    const ctx=ac();
-    const audio=new Audio(CAT_MEOW_URL);
-    // Use Web Audio to boost volume
-    const source=ctx.createMediaElementSource(audio);
-    const gain=ctx.createGain();
-    gain.gain.value=3.5; // amplify
-    source.connect(gain);gain.connect(ctx.destination);
-    audio.play().catch(()=>{});
-  }catch(e){
-    // fallback — just play at max volume
-    const a=new Audio(CAT_MEOW_URL);
-    a.volume=1.0;a.play().catch(()=>{});
-  }
-}
-  if(ambientScene===scene) return;
-  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,1200,()=>{o.pause();o.src='';});}
-  const a=new Audio(AMBIENT_URLS[scene]||AMBIENT_URLS.village);
-  a.loop=true;a.volume=0;a.play().catch(()=>{});
-  fadeAudio(a,0,0.35,1200);
-  ambientAudio=a;ambientScene=scene;
-}
 function fadeAudio(audio,from,to,dur,onDone){
   const steps=40,iv=dur/steps,delta=(to-from)/steps;
   let v=from,n=0;
-  const t=setInterval(()=>{v+=delta;n++;audio.volume=Math.max(0,Math.min(1,v));if(n>=steps){clearInterval(t);if(onDone)onDone();}},iv);
+  const t=setInterval(()=>{
+    v+=delta;n++;
+    audio.volume=Math.max(0,Math.min(1,v));
+    if(n>=steps){clearInterval(t);if(onDone)onDone();}
+  },iv);
 }
+
+// Ambient
+let ambientAudio=null,ambientScene=null;
+function playAmbient(scene){
+  if(ambientScene===scene)return;
+  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,1200,()=>{o.pause();o.src='';});}
+  const url=AMBIENT_URLS[scene];if(!url)return;
+  const a=new Audio(url);a.loop=true;a.volume=0;a.play().catch(()=>{});
+  fadeAudio(a,0,0.35,1200);
+  ambientAudio=a;ambientScene=scene;
+}
+
+// Lobby music
+let lobbyMusic=null;
+function startLobbyMusic(){
+  if(lobbyMusic)return;
+  lobbyMusic=new Audio(LOBBY_URL);
+  lobbyMusic.loop=true;lobbyMusic.volume=0.5;
+  lobbyMusic.play().catch(()=>{});
+}
+function stopLobbyMusic(){
+  if(!lobbyMusic)return;
+  const o=lobbyMusic;lobbyMusic=null;
+  fadeAudio(o,o.volume,0,1000,()=>{o.pause();o.src='';});
+}
+
+// Tavern door + fade
+function playDoorAndEnterTavern(){
+  const door=new Audio(DOOR_URL);door.volume=0.9;door.play().catch(()=>{});
+  if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,400,()=>{o.pause();o.src='';});}
+  const a=new Audio(AMBIENT_URLS.tavern);a.loop=true;a.volume=0;a.play().catch(()=>{});
+  setTimeout(()=>fadeAudio(a,0,0.35,1200),1200);
+  ambientAudio=a;ambientScene='tavern';
+}
+
+// Cat meow (amplified)
+function playCatMeow(){
+  try{
+    const ctx=ac();
+    const audio=new Audio(MEOW_URL);
+    const src=ctx.createMediaElementSource(audio);
+    const gain=ctx.createGain();gain.gain.value=3.5;
+    src.connect(gain);gain.connect(ctx.destination);
+    audio.play().catch(()=>{});
+  }catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
+}
+
+// Footsteps
+let footstepAudio=null;
 function startFootsteps(){
   if(footstepAudio)return;
-  footstepAudio=new Audio('https://amtrasi.github.io/wanderers-path/audio/816019__qubodup__fps-footsteps-loop.wav');
-  footstepAudio.loop=true;footstepAudio.volume=0.5;footstepAudio.play().catch(()=>{});
+  footstepAudio=new Audio(STEPS_URL);
+  footstepAudio.loop=true;footstepAudio.volume=0.5;
+  footstepAudio.play().catch(()=>{});
 }
 function stopFootsteps(){
   if(footstepAudio){footstepAudio.pause();footstepAudio.currentTime=0;footstepAudio=null;}
+}
+
+// Synth sounds
+function tn(freq,dur,delay,vol,type){
+  delay=delay||0;vol=vol||0.06;type=type||'sine';
+  try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;
+  const t=ctx.currentTime+delay;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur+0.05);}catch(e){}
+}
+function sndPickup(){[523,659,784].forEach(function(f,i){tn(f,0.18,i*0.1);});}
+function sndCoin(){tn(880,0.1);tn(1100,0.1,0.08);}
+function sndHeal(){tn(528,0.35,0,0.05);}
+function sndBump(){tn(220,0.12,0,0.05,'square');tn(180,0.14,0.09,0.04,'square');}
+function sndBird(){
+  [[0,900,1100],[0.15,1000,1300]].forEach(function(arr){
+    var d=arr[0],f1=arr[1],f2=arr[2];
+    try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);o.type='sine';
+    var t=ctx.currentTime+d;
+    o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+0.08);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+    o.start(t);o.stop(t+0.12);}catch(e){}
+  });
+}
+
+function narrativeSounds(lines){
+  var t=lines.join(' ').toLowerCase();
+  if(/\bcat\b|kitten|meow|purr/.test(t))setTimeout(playCatMeow,400);
+  if(/\bbird|chirp|sparrow|robin/.test(t))setTimeout(sndBird,400);
+}
+
+// ── TTS ────────────────────────────────────────────────────────────────
+let voiceOn=true,curAudio=null;
+async function speak(text){
+  if(!voiceOn)return;
+  if(curAudio){curAudio.pause();curAudio=null;}
+  try{
+    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{
+      method:'POST',
+      headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
+    });
+    if(!r.ok)return;
+    curAudio=new Audio(URL.createObjectURL(await r.blob()));
+    curAudio.play().catch(()=>{});
+  }catch(e){}
+}
+function toggleVoice(){
+  voiceOn=!voiceOn;
+  if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}
+  document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');
 }
 
 // ── Character animation ────────────────────────────────────────────────
@@ -143,16 +221,20 @@ function animateWalkOut(newScene,cb){
   pendingScene=newScene;pendingCallback=cb;
   charState='walkout';charDir=1;
   if(newScene==='tavern'){
-    // special: door creak + realistic fade in
-    setTimeout(()=>playDoorAndEnterTavern(),300);
-  } else {
+    setTimeout(playDoorAndEnterTavern,300);
+  }else{
     playAmbient(newScene);
   }
   startFootsteps();
 }
 function tickChar(){
-  if(charState==='walkout'){charX+=2;if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}}
-  else if(charState==='walkin'){charX+=2;if(charX>=PW/2){charX=PW/2;charState='idle';stopFootsteps();if(pendingCallback){pendingCallback();pendingCallback=null;}}}
+  if(charState==='walkout'){
+    charX+=2;
+    if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}
+  }else if(charState==='walkin'){
+    charX+=2;
+    if(charX>=PW/2){charX=PW/2;charState='idle';stopFootsteps();if(pendingCallback){pendingCallback();pendingCallback=null;}}
+  }
 }
 
 // ── Canvas ─────────────────────────────────────────────────────────────
@@ -166,78 +248,79 @@ function resizeCanvas(){
   cv.style.width=w+'px';cv.style.height=Math.round(w*(PH/PW))+'px';
 }
 
-// ── Audio ──────────────────────────────────────────────────────────────
-let actx=null;
-function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
-function tn(freq,dur,delay=0,vol=0.06,type='sine'){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=freq;const t=ctx.currentTime+delay;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur+0.05);}catch(e){}}
-function sndPickup(){[523,659,784].forEach((f,i)=>tn(f,0.18,i*0.1));}
-function sndCoin(){tn(880,0.1);tn(1100,0.1,0.08);}
-function sndHeal(){tn(528,0.35,0,0.05);}
-function sndBump(){tn(220,0.12,0,0.05,'square');tn(180,0.14,0.09,0.04,'square');}
-function sndMeow(){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.setValueAtTime(600,ctx.currentTime);o.frequency.linearRampToValueAtTime(900,ctx.currentTime+0.08);o.frequency.linearRampToValueAtTime(500,ctx.currentTime+0.35);g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(0.09,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.38);o.start();o.stop(ctx.currentTime+0.4);}catch(e){}}
-function sndBird(){[[0,900,1100],[0.15,1000,1300]].forEach(([d,f1,f2])=>{try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';const t=ctx.currentTime+d;o.frequency.setValueAtTime(f1,t);o.frequency.linearRampToValueAtTime(f2,t+0.08);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);o.start(t);o.stop(t+0.12);}catch(e){}});}
-function sndDoor(){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,ctx.currentTime);o.frequency.linearRampToValueAtTime(180,ctx.currentTime+0.4);g.gain.setValueAtTime(0.06,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);o.start();o.stop(ctx.currentTime+0.5);}catch(e){}}
-function narrativeSounds(lines){
-  const t=lines.join(' ').toLowerCase();
-  if(/\bcat\b|kitten|meow|purr/.test(t)) setTimeout(playCatMeow,400);
-  if(/\bbird|chirp|sparrow|robin/.test(t)) setTimeout(sndBird,400);
-  if(/\bdoor|creak|gate/.test(t)) setTimeout(sndDoor,400);
-}
-
-// ── TTS ────────────────────────────────────────────────────────────────
-let voiceOn=true,curAudio=null;
-let skipTypewriter=false;
-const XIK='sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26',XIV='N2lVS1w4EtoT3dr4eOWO';
-async function speak(text){
-  if(!voiceOn)return;if(curAudio){curAudio.pause();curAudio=null;}
-  try{const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${XIV}`,{method:'POST',headers:{'xi-api-key':XIK,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
-  if(!r.ok)return;curAudio=new Audio(URL.createObjectURL(await r.blob()));curAudio.play().catch(()=>{});}catch(e){}
-}
-function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent=`♪ VOICE: ${voiceOn?'ON':'OFF'}`;}
-
 // ── Pixel helpers ──────────────────────────────────────────────────────
 function rect(x,y,w,h,c){cx.fillStyle=c;cx.fillRect(x,y,w,h);}
 function dot(x,y,c){cx.fillStyle=c;cx.fillRect(x,y,1,1);}
 function hline(x,y,w,c){cx.fillStyle=c;cx.fillRect(x,y,w,1);}
 function vline(x,y,h,c){cx.fillStyle=c;cx.fillRect(x,y,1,h);}
 
-function stoneTile(x,y,w,h,light='#9a9080',dark='#6a6058',shadow='#4a4038'){
+function stoneTile(x,y,w,h,light,dark,shadow){
+  light=light||'#9a9080';dark=dark||'#6a6058';shadow=shadow||'#4a4038';
   rect(x,y,w,h,dark);
-  const bh=6,bw=10;
-  for(let row=0;row<Math.ceil(h/bh);row++){
-    const off=(row%2)*5;
-    for(let col=0;col<Math.ceil(w/bw)+1;col++){
-      const bx=x+col*bw-off,by=y+row*bh;
+  var bh=6,bw=10;
+  for(var row=0;row<Math.ceil(h/bh);row++){
+    var off=(row%2)*5;
+    for(var col=0;col<Math.ceil(w/bw)+1;col++){
+      var bx=x+col*bw-off,by=y+row*bh;
       if(bx+bw<x||bx>x+w)continue;
-      const cx2=Math.max(bx,x),cw=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
+      var cx2=Math.max(bx,x),cw=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
       if(ch<=0)continue;
       rect(cx2,by,cw,ch,light);hline(cx2,by+ch-1,cw,shadow);vline(cx2+cw-1,by,ch,shadow);
     }
   }
 }
+
 function cobblePath(x,y,w,h){
   rect(x,y,w,h,'#8a7850');
-  const pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[259,0,13,7],[273,1,10,6],[285,0,14,7],[300,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6],[259,8,13,7],[273,9,10,6],[285,8,14,7],[300,9,11,6]];
-  pat.forEach(([sx,sy,sw,sh])=>{const ax=x+(sx%(w||1)),ay=y+sy;if(ax>x+w||ay>y+h)return;const fw=Math.min(sw,x+w-ax),fh=Math.min(sh,y+h-ay);rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');});
+  var pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[259,0,13,7],[273,1,10,6],[285,0,14,7],[300,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6],[259,8,13,7],[273,9,10,6],[285,8,14,7],[300,9,11,6]];
+  pat.forEach(function(p){var ax=x+(p[0]%(w||1)),ay=y+p[1];if(ax>x+w||ay>y+h)return;var fw=Math.min(p[2],x+w-ax),fh=Math.min(p[3],y+h-ay);rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');});
 }
-function pixelTree(x,y,sc=1){
-  const s=Math.max(1,Math.round(sc)),tw=6*s,tx=x-tw/2;
+
+function pixelTree(x,y,sc){
+  sc=sc||1;var s=Math.max(1,Math.round(sc)),tw=6*s,tx=x-tw/2;
   rect(tx,y,tw,24*s,'#5a3010');rect(tx+1,y,tw-2,24*s,'#7a4818');
   rect(tx-3,y+20*s,4,4,'#5a3010');rect(tx+tw-1,y+20*s,4,4,'#5a3010');
-  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828'],[x+2*s,y-19*s,4*s,4*s,'#62b02e']].forEach(([lx,ly,lw,lh,lc])=>{const hw=Math.floor(lw/2);for(let row=0;row<lh;row++){const bulge=Math.sin((row/lh)*Math.PI);const rw=Math.max(1,Math.round(lw*bulge));rect(lx-hw+Math.round((lw-rw)/2),ly+row,rw,1,lc);}});
+  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828'],[x+2*s,y-19*s,4*s,4*s,'#62b02e']].forEach(function(l){var hw=Math.floor(l[2]/2);for(var row=0;row<l[3];row++){var b=Math.sin((row/l[3])*Math.PI),rw=Math.max(1,Math.round(l[2]*b));rect(l[0]-hw+Math.round((l[2]-rw)/2),l[1]+row,rw,1,l[4]);}});
 }
-function pixelBush(x,y,c1='#2a5010',c2='#3a6818',c3='#4a8020'){rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);}
-function stoneArch(x,y,w,h){stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');const cy2=y+h;for(let i=0;i<w-16;i++){const t=(i/(w-16))*Math.PI;const ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}}
-function pixelHouse(x,y,w=50,h=40){stoneTile(x,y+Math.round(h*0.3),w,Math.round(h*0.7));const rh=Math.round(h*0.4);for(let row=0;row<rh;row++){const sh=row/rh;rect(x+row,y+row,w-row*2,1,`rgb(${Math.round(160-sh*60)},${Math.round(60-sh*20)},10)`);}rect(x+8,y+Math.round(h*0.45),10,8,'#1a2030');hline(x+8,y+Math.round(h*0.45),10,'#a09070');rect(x+Math.round(w*0.4),y+Math.round(h*0.65),Math.round(w*0.2),Math.round(h*0.35),'#3a1c08');}
-function pixelWater(x,y,w,h){const t=Date.now()/800;for(let row=0;row<h;row++){const d=row/h;rect(x,y+row,w,1,`rgb(${Math.round(20+d*10)},${Math.round(60+d*20)},${Math.round(120+d*30)})`);}for(let i=0;i<5;i++){const rx=(i*65+Math.floor(t*20))%w;rect(x+rx,y+Math.round(h*0.3),20,1,'rgba(180,220,255,0.25)');rect(x+rx+8,y+Math.round(h*0.6),12,1,'rgba(180,220,255,0.2)');}}
-function pixelNPC(x,y,emoji){cx.save();cx.globalAlpha=0.3;cx.fillStyle='#e8d060';cx.beginPath();cx.arc(x,y,10,0,Math.PI*2);cx.fill();cx.restore();cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);}
 
-function pixelPlayer(px,py,frame,dir=1){
+function pixelBush(x,y,c1,c2,c3){
+  c1=c1||'#2a5010';c2=c2||'#3a6818';c3=c3||'#4a8020';
+  rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);
+}
+
+function stoneArch(x,y,w,h){
+  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
+  var cy2=y+h;
+  for(var i=0;i<w-16;i++){var t=(i/(w-16))*Math.PI,ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}
+}
+
+function pixelHouse(x,y,w,h){
+  w=w||50;h=h||40;
+  stoneTile(x,y+Math.round(h*0.3),w,Math.round(h*0.7));
+  var rh=Math.round(h*0.4);
+  for(var row=0;row<rh;row++){var sh=row/rh;rect(x+row,y+row,w-row*2,1,'rgb('+Math.round(160-sh*60)+','+Math.round(60-sh*20)+',10)');}
+  rect(x+8,y+Math.round(h*0.45),10,8,'#1a2030');hline(x+8,y+Math.round(h*0.45),10,'#a09070');
+  rect(x+Math.round(w*0.4),y+Math.round(h*0.65),Math.round(w*0.2),Math.round(h*0.35),'#3a1c08');
+}
+
+function pixelWater(x,y,w,h){
+  var t=Date.now()/800;
+  for(var row=0;row<h;row++){var d=row/h;rect(x,y+row,w,1,'rgb('+Math.round(20+d*10)+','+Math.round(60+d*20)+','+Math.round(120+d*30)+')');}
+  for(var i=0;i<5;i++){var rx=(i*65+Math.floor(t*20))%w;rect(x+rx,y+Math.round(h*0.3),20,1,'rgba(180,220,255,0.25)');rect(x+rx+8,y+Math.round(h*0.6),12,1,'rgba(180,220,255,0.2)');}
+}
+
+function pixelNPC(x,y,emoji){
+  cx.save();cx.globalAlpha=0.3;cx.fillStyle='#e8d060';cx.beginPath();cx.arc(x,y,10,0,Math.PI*2);cx.fill();cx.restore();
+  cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);
+}
+
+function pixelPlayer(px,py,frame,dir){
+  dir=dir||1;
   cx.save();if(dir===-1){cx.translate(Math.round(px)*2,0);cx.scale(-1,1);}
-  const tmp=document.createElement('canvas');tmp.width=32;tmp.height=48;
-  const t=tmp.getContext('2d');t.imageSmoothingEnabled=false;
-  const skin='#8B5E3C',hair='#1a0e00',tunic='#c03060',legs='#5a3472',boot='#2a1800',gold='#e8a020';
-  const legA=frame===1?2:frame===3?-2:0,legB=frame===1?-2:frame===3?2:0,bob=(frame===1||frame===3)?1:0;
+  var tmp=document.createElement('canvas');tmp.width=32;tmp.height=48;
+  var t=tmp.getContext('2d');t.imageSmoothingEnabled=false;
+  var skin='#8B5E3C',hair='#1a0e00',tunic='#c03060',legs='#5a3472',boot='#2a1800',gold='#e8a020';
+  var legA=frame===1?2:frame===3?-2:0,legB=frame===1?-2:frame===3?2:0,bob=(frame===1||frame===3)?1:0;
   function r(x,y,w,h,c){t.fillStyle=c;t.fillRect(x,y,w,h);}
   function d(x,y,c){t.fillStyle=c;t.fillRect(x,y,1,1);}
   r(5,6,4,28,hair);r(3,8,3,10,hair);r(4,18,3,8,hair);r(6,26,3,8,hair);r(4,34,4,6,hair);
@@ -261,365 +344,157 @@ function pixelPlayer(px,py,frame,dir=1){
   cx.drawImage(tmp,Math.round(px)-16,Math.round(py)-40);cx.restore();
 }
 
-const SCENES={
-  intro(W,H){
-    // Dawn sky — soft purples and pinks
-    for(let i=0;i<Math.round(H*0.5);i++){const d=i/(H*0.5);rect(0,i,W,1,`rgb(${Math.round(80+d*80)},${Math.round(60+d*80)},${Math.round(120+d*60)})`);}
-    // Sun rising on horizon
-    cx.save();
-    const sg=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.4);
-    sg.addColorStop(0,'rgba(255,220,120,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');
-    cx.fillStyle=sg;cx.fillRect(0,0,W,H);cx.restore();
-    // distant misty hills
-    [[W*0.0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(([mx,my,mw,mc])=>{for(let i=0;i<mw;i++){const mh=Math.round(Math.sin((i/mw)*Math.PI)*H*0.12);rect(mx+i,my-mh,1,mh+H*0.2,mc);}});
-    // ground
-    for(let i=0;i<Math.round(H*0.52);i++){const d=i/(H*0.52);rect(0,Math.round(H*0.48)+i,W,1,`rgb(${Math.round(35+d*15)},${Math.round(55+d*35)},${Math.round(20+d*10)})`);}
-    // cobble path leading into distance
+// ── Scenes ─────────────────────────────────────────────────────────────
+var SCENES={
+  intro:function(W,H){
+    for(var i=0;i<Math.round(H*0.5);i++){var d=i/(H*0.5);rect(0,i,W,1,'rgb('+Math.round(80+d*80)+','+Math.round(60+d*80)+','+Math.round(120+d*60)+')');}
+    cx.save();var sg=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.4);sg.addColorStop(0,'rgba(255,220,120,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');cx.fillStyle=sg;cx.fillRect(0,0,W,H);cx.restore();
+    [[W*0.0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.12);rect(m[0]+i,m[1]-mh,1,mh+H*0.2,m[3]);}});
+    for(var i=0;i<Math.round(H*0.52);i++){var d=i/(H*0.52);rect(0,Math.round(H*0.48)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(55+d*35)+','+Math.round(20+d*10)+')');}
     cobblePath(W*0.35,H*0.5,W*0.3,H*0.5);
-    // silhouette trees
     pixelTree(W*0.08,H*0.66,1.9);pixelTree(W*0.88,H*0.62,1.7);pixelTree(W*0.72,H*0.68,1.4);
-    // flowers
-    [[W*0.2,H*0.62,'#e060a0'],[W*0.28,H*0.7,'#ffff60'],[W*0.58,H*0.65,'#e060a0'],[W*0.65,H*0.72,'#60c8e0']].forEach(([fx,fy,fc])=>{rect(fx,fy,1,4,'#40780a');rect(fx-2,fy,5,4,fc);});
-    // title card
-    cx.save();
-    cx.fillStyle='rgba(10,6,0,0.55)';cx.fillRect(W*0.1,H*0.14,W*0.8,H*0.22);
-    cx.strokeStyle='#c8a040';cx.lineWidth=1;cx.strokeRect(W*0.1,H*0.14,W*0.8,H*0.22);
-    cx.fillStyle='#e8c040';cx.font=`${Math.round(W*0.038)}px 'Press Start 2P', monospace`;
-    cx.textAlign='center';cx.textBaseline='middle';
-    cx.fillText('THE WANDERER',W*0.5,H*0.22);
-    cx.fillText("'S PATH",W*0.5,H*0.3);
-    cx.restore();
+    [[W*0.2,H*0.62,'#e060a0'],[W*0.28,H*0.7,'#ffff60'],[W*0.58,H*0.65,'#e060a0'],[W*0.65,H*0.72,'#60c8e0']].forEach(function(f){rect(f[0],f[1],1,4,'#40780a');rect(f[0]-2,f[1],5,4,f[2]);});
+    cx.save();cx.fillStyle='rgba(10,6,0,0.55)';cx.fillRect(W*0.1,H*0.14,W*0.8,H*0.22);cx.strokeStyle='#c8a040';cx.lineWidth=1;cx.strokeRect(W*0.1,H*0.14,W*0.8,H*0.22);cx.fillStyle='#e8c040';cx.font=Math.round(W*0.038)+"px 'Press Start 2P',monospace";cx.textAlign='center';cx.textBaseline='middle';    cx.fillText("THE WANDERER'S PATH",W*0.5,H*0.26);cx.restore();
   },
-    for(let i=0;i<Math.round(H*0.38);i++){const d=i/(H*0.38);rect(0,i,W,1,`rgb(${Math.round(120+d*20)},${Math.round(176+d*16)},${Math.round(208+d*8)})`);}
-    [[W*0.05,H*0.25,W*0.18,'#607888'],[W*0.2,H*0.2,W*0.22,'#708898'],[W*0.55,H*0.22,W*0.2,'#607888'],[W*0.72,H*0.18,W*0.25,'#708898']].forEach(([mx,my,mw,mc])=>{for(let i=0;i<mw;i++){const mh=Math.round(Math.sin((i/mw)*Math.PI)*H*0.1);rect(mx+i,my-mh,1,mh+H*0.16,mc);}});
-    for(let i=0;i<Math.round(H*0.62);i++){const d=i/(H*0.62);rect(0,Math.round(H*0.38)+i,W,1,`rgb(${Math.round(30+d*20)},${Math.round(60+d*40)},${Math.round(15+d*10)})`);}
+  village:function(W,H){
+    for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(120+d*20)+','+Math.round(176+d*16)+','+Math.round(208+d*8)+')');}
+    [[W*0.05,H*0.25,W*0.18,'#607888'],[W*0.2,H*0.2,W*0.22,'#708898'],[W*0.55,H*0.22,W*0.2,'#607888'],[W*0.72,H*0.18,W*0.25,'#708898']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.1);rect(m[0]+i,m[1]-mh,1,mh+H*0.16,m[3]);}});
+    for(var i=0;i<Math.round(H*0.62);i++){var d=i/(H*0.62);rect(0,Math.round(H*0.38)+i,W,1,'rgb('+Math.round(30+d*20)+','+Math.round(60+d*40)+','+Math.round(15+d*10)+')');}
     cobblePath(W*0.22,Math.round(H*0.52),W*0.56,Math.round(H*0.48));
     pixelTree(18,H*0.7,2.2);pixelTree(W-20,H*0.65,1.8);
-    pixelHouse(W*0.55,H*0.1,70,55);
-    stoneTile(W*0.6,H*0.38,W*0.35,H*0.25);stoneArch(W*0.68,H*0.26,30,20);
+    pixelHouse(W*0.55,H*0.1,70,55);stoneTile(W*0.6,H*0.38,W*0.35,H*0.25);stoneArch(W*0.68,H*0.26,30,20);
     pixelHouse(W*0.05,H*0.18,44,40);stoneTile(W*0.04,H*0.35,W*0.18,H*0.22,'#8a8070','#6a6058','#4a4838');
     stoneArch(W*0.3,H*0.52,45,18);
     pixelBush(W*0.22,H*0.65);pixelBush(W*0.48,H*0.6);pixelBush(W*0.74,H*0.72);
     rect(W*0.08,H*0.78,10,5,'#605850');rect(W*0.82,H*0.8,8,4,'#605850');
     pixelNPC(W*0.5,H*0.64,'🧙');pixelNPC(W*0.35,H*0.68,'👨‍🌾');
   },
-  meadow(W,H){
-    for(let i=0;i<Math.round(H*0.4);i++){const d=i/(H*0.4);rect(0,i,W,1,`rgb(${Math.round(128+d*16)},${Math.round(196+d*12)},${Math.round(232+d*8)})`);}
-    [[W*0.1,18],[W*0.5,12],[W*0.75,20]].forEach(([cx2,cy])=>{rect(cx2,cy,22,5,'rgba(255,255,255,0.7)');rect(cx2+4,cy-3,14,4,'rgba(255,255,255,0.6)');});
-    for(let i=0;i<Math.round(H*0.6);i++){const d=i/(H*0.6);rect(0,Math.round(H*0.4)+i,W,1,`rgb(${Math.round(40+d*20)},${Math.round(80+d*50)},${Math.round(20+d*10)})`);}
+  meadow:function(W,H){
+    for(var i=0;i<Math.round(H*0.4);i++){var d=i/(H*0.4);rect(0,i,W,1,'rgb('+Math.round(128+d*16)+','+Math.round(196+d*12)+','+Math.round(232+d*8)+')');}
+    [[W*0.1,18],[W*0.5,12],[W*0.75,20]].forEach(function(c){rect(c[0],c[1],22,5,'rgba(255,255,255,0.7)');rect(c[0]+4,c[1]-3,14,4,'rgba(255,255,255,0.6)');});
+    for(var i=0;i<Math.round(H*0.6);i++){var d=i/(H*0.6);rect(0,Math.round(H*0.4)+i,W,1,'rgb('+Math.round(40+d*20)+','+Math.round(80+d*50)+','+Math.round(20+d*10)+')');}
     cobblePath(W*0.3,H*0.5,W*0.4,H*0.5);
     pixelTree(W*0.08,H*0.72,1.8);pixelTree(W*0.82,H*0.68,1.6);pixelTree(W*0.55,H*0.62,1.4);
-    [[W*0.18,H*0.6,'#e060a0'],[W*0.25,H*0.72,'#e8e040'],[W*0.65,H*0.65,'#e060a0'],[W*0.72,H*0.75,'#60b8e0'],[W*0.42,H*0.58,'#e8e040']].forEach(([fx,fy,fc])=>{rect(fx,fy,1,4,'#40780a');rect(fx-2,fy,5,4,fc);dot(fx,fy,'#ffffa0');});
+    [[W*0.18,H*0.6,'#e060a0'],[W*0.25,H*0.72,'#e8e040'],[W*0.65,H*0.65,'#e060a0'],[W*0.72,H*0.75,'#60b8e0'],[W*0.42,H*0.58,'#e8e040']].forEach(function(f){rect(f[0],f[1],1,4,'#40780a');rect(f[0]-2,f[1],5,4,f[2]);dot(f[0],f[1],'#ffffa0');});
     pixelBush(W*0.2,H*0.65);pixelBush(W*0.68,H*0.7);
     pixelNPC(W*0.55,H*0.62,'🧙');pixelNPC(W*0.2,H*0.65,'🐇');
   },
-  forest(W,H){
-    for(let i=0;i<H;i++){const d=i/H;rect(0,i,W,1,`rgb(${Math.round(8+d*12)},${Math.round(18+d*30)},${Math.round(8+d*12)})`);}
-    cx.save();['rgba(100,180,60,0.06)','rgba(120,200,70,0.04)','rgba(80,160,50,0.05)'].forEach((c,i)=>{cx.fillStyle=c;cx.beginPath();const bx=W*(0.25+i*0.2);cx.moveTo(bx-5,0);cx.lineTo(bx-30,H);cx.lineTo(bx+30,H);cx.lineTo(bx+5,0);cx.fill();});cx.restore();
+  forest:function(W,H){
+    for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(8+d*12)+','+Math.round(18+d*30)+','+Math.round(8+d*12)+')');}
+    cx.save();['rgba(100,180,60,0.06)','rgba(120,200,70,0.04)','rgba(80,160,50,0.05)'].forEach(function(c,i){cx.fillStyle=c;cx.beginPath();var bx=W*(0.25+i*0.2);cx.moveTo(bx-5,0);cx.lineTo(bx-30,H);cx.lineTo(bx+30,H);cx.lineTo(bx+5,0);cx.fill();});cx.restore();
     cobblePath(0,H*0.55,W,H*0.45);
-    [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(([fx,fy,sc])=>pixelTree(W*fx,H*fy,sc));
-    [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(([mx,my,mc])=>{rect(mx-2,my-2,4,6,'#c0b888');rect(mx-5,my-4,10,4,mc);rect(mx-3,my-5,6,3,mc);rect(mx-2,my-4,2,2,'rgba(255,255,220,0.6)');});
+    [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(function(f){pixelTree(W*f[0],H*f[1],f[2]);});
+    [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(function(m){rect(m[0]-2,m[1]-2,4,6,'#c0b888');rect(m[0]-5,m[1]-4,10,4,m[2]);rect(m[0]-3,m[1]-5,6,3,m[2]);rect(m[0]-2,m[1]-4,2,2,'rgba(255,255,220,0.6)');});
     pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
     pixelNPC(W*0.5,H*0.63,'🦊');
   },
-  tavern(W,H){
-    for(let i=0;i<H;i++){const d=i/H;rect(0,i,W,1,`rgb(${Math.round(18+d*8)},${Math.round(10+d*6)},${Math.round(2+d*2)})`);}
+  tavern:function(W,H){
+    for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(18+d*8)+','+Math.round(10+d*6)+','+Math.round(2+d*2)+')');}
     stoneTile(0,0,W,H*0.5,'#6a6050','#4a4038','#3a3028');
-    for(let i=0;i<8;i++){rect(0,Math.round(H*0.5)+i*Math.round(H*0.065),W,Math.round(H*0.065),i%2===0?'#3a2408':'#2a1800');}
+    for(var i=0;i<8;i++){rect(0,Math.round(H*0.5)+i*Math.round(H*0.065),W,Math.round(H*0.065),i%2===0?'#3a2408':'#2a1800');}
     stoneTile(W*0.65,H*0.05,W*0.28,H*0.45,'#8a8070','#6a6058','#4a4038');
     rect(W*0.68,H*0.18,W*0.22,H*0.3,'#1a1008');
-    cx.save();const fg=cx.createRadialGradient(W*0.79,H*0.4,0,W*0.79,H*0.4,W*0.4);fg.addColorStop(0,'rgba(255,128,32,0.15)');fg.addColorStop(1,'rgba(255,128,32,0)');cx.fillStyle=fg;cx.fillRect(0,0,W,H);cx.restore();
-    [[0,'#e04010',4,10],[1,'#f06010',5,8],[2,'#f8a020',3,6],[3,'#ffe040',2,4]].forEach(([i,c,fw,fh])=>{for(let f=0;f<3;f++){const fx=W*0.7+f*W*0.065;rect(fx,H*0.42-fh+i,fw,fh-i*2,c);}});
-    for(let i=0;i<Math.round(H*0.35);i++){const d=i/(H*0.35);rect(0,Math.round(H*0.48)+i,W*0.42,1,`rgb(${Math.round(60+d*20)},${Math.round(30+d*10)},${Math.round(5+d*5)})`);}
+    cx.save();var fg=cx.createRadialGradient(W*0.79,H*0.4,0,W*0.79,H*0.4,W*0.4);fg.addColorStop(0,'rgba(255,128,32,0.15)');fg.addColorStop(1,'rgba(255,128,32,0)');cx.fillStyle=fg;cx.fillRect(0,0,W,H);cx.restore();
+    [[0,'#e04010',4,10],[1,'#f06010',5,8],[2,'#f8a020',3,6],[3,'#ffe040',2,4]].forEach(function(fl){for(var f=0;f<3;f++){var fx=W*0.7+f*W*0.065;rect(fx,H*0.42-fl[3]+fl[0],fl[2],fl[3]-fl[0]*2,fl[1]);}});
+    for(var i=0;i<Math.round(H*0.35);i++){var d=i/(H*0.35);rect(0,Math.round(H*0.48)+i,W*0.42,1,'rgb('+Math.round(60+d*20)+','+Math.round(30+d*10)+','+Math.round(5+d*5)+')');}
     hline(0,Math.round(H*0.48),W*0.42,'#9a6828');
-    [[W*0.06,'#801010'],[W*0.12,'#104888'],[W*0.18,'#106040'],[W*0.24,'#886010'],[W*0.30,'#481888']].forEach(([bx,bc])=>{rect(bx,H*0.15,7,18,bc);rect(bx+1,H*0.13,5,4,'#888');rect(bx+1,H*0.16,2,6,'rgba(255,255,255,0.2)');});
+    [[W*0.06,'#801010'],[W*0.12,'#104888'],[W*0.18,'#106040'],[W*0.24,'#886010'],[W*0.30,'#481888']].forEach(function(b){rect(b[0],H*0.15,7,18,b[1]);rect(b[0]+1,H*0.13,5,4,'#888');rect(b[0]+1,H*0.16,2,6,'rgba(255,255,255,0.2)');});
     hline(W*0.04,H*0.34,W*0.35,'#7a5020');
     rect(W*0.08,H*0.38,10,10,'#a07828');rect(W*0.2,H*0.38,10,10,'#a07828');
     pixelNPC(W*0.25,H*0.55,'🍺');pixelNPC(W*0.55,H*0.56,'🎶');
   },
-  river(W,H){
-    for(let i=0;i<Math.round(H*0.38);i++){const d=i/(H*0.38);rect(0,i,W,1,`rgb(${Math.round(96+d*16)},${Math.round(152+d*16)},${Math.round(192+d*8)})`);}
-    for(let i=0;i<Math.round(H*0.12);i++){const d=i/(H*0.12);rect(0,Math.round(H*0.38)+i,W,1,`rgb(${Math.round(35+d*15)},${Math.round(65+d*30)},${Math.round(20+d*10)})`);}
+  river:function(W,H){
+    for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(96+d*16)+','+Math.round(152+d*16)+','+Math.round(192+d*8)+')');}
+    for(var i=0;i<Math.round(H*0.12);i++){var d=i/(H*0.12);rect(0,Math.round(H*0.38)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(65+d*30)+','+Math.round(20+d*10)+')');}
     pixelWater(0,Math.round(H*0.5),W,Math.round(H*0.22));
-    for(let i=0;i<Math.round(H*0.28);i++){const d=i/(H*0.28);rect(0,Math.round(H*0.72)+i,W,1,`rgb(${Math.round(30+d*15)},${Math.round(55+d*30)},${Math.round(15+d*10)})`);}
+    for(var i=0;i<Math.round(H*0.28);i++){var d=i/(H*0.28);rect(0,Math.round(H*0.72)+i,W,1,'rgb('+Math.round(30+d*15)+','+Math.round(55+d*30)+','+Math.round(15+d*10)+')');}
     cobblePath(W*0.2,H*0.74,W*0.6,H*0.26);
     pixelTree(W*0.06,H*0.68,1.6);pixelTree(W*0.84,H*0.65,1.7);
     pixelBush(W*0.22,H*0.5);pixelBush(W*0.7,H*0.48);
-    [[W*0.18,H*0.47,'#e060a0'],[W*0.6,H*0.46,'#e8e040'],[W*0.38,H*0.48,'#60b8e0']].forEach(([fx,fy,fc])=>{rect(fx,fy,1,4,'#408010');rect(fx-2,fy,5,3,fc);});
+    [[W*0.18,H*0.47,'#e060a0'],[W*0.6,H*0.46,'#e8e040'],[W*0.38,H*0.48,'#60b8e0']].forEach(function(f){rect(f[0],f[1],1,4,'#408010');rect(f[0]-2,f[1],5,3,f[2]);});
     pixelNPC(W*0.48,H*0.47,'🦆');
   }
 };
 
 function renderScene(){
   cx.imageSmoothingEnabled=false;
-  (SCENES[S.scene]||SCENES.village)(PW,PH);
+  var draw=SCENES[S.scene]||SCENES.village;
+  draw(PW,PH);
   tickChar();
-  const wf=charState!=='idle'?Math.floor(af/5)%4:0;
+  var wf=charState!=='idle'?Math.floor(af/5)%4:0;
   pixelPlayer(charX,PH*0.72,wf,charDir);
   af++;requestAnimationFrame(renderScene);
 }
 
-// ── Game state ─────────────────────────────────────────────────────────
-const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
-
-// ── Story engine ───────────────────────────────────────────────────────
-// Each node: { scene, lines, event, hpChange, xpGain, goldChange, itemGained, choices: [{text, next}] }
-const STORY={
-  start:{
-    scene:'village',
-    lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],
-    event:'none',
-    choices:[
-      {text:"A) Visit the market stalls",next:'village_market'},
-      {text:"B) Talk to the old sage",next:'village_sage'},
-      {text:"C) Head toward the meadow",next:'meadow_arrive'},
-    ]
-  },
-  village_market:{
-    scene:'village',
-    lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],
-    event:'none',
-    choices:[
-      {text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},
-      {text:"B) Browse for something else",next:'market_browse'},
-      {text:"C) Head to the tavern instead",next:'tavern_arrive'},
-    ]
-  },
-  buy_cake:{
-    scene:'village',
-    lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],
-    event:'loot',goldChange:-3,itemGained:'honey cake',
-    choices:[
-      {text:"A) Head to the meadow",next:'meadow_arrive'},
-      {text:"B) Visit the sage",next:'village_sage'},
-      {text:"C) Go to the tavern",next:'tavern_arrive'},
-    ]
-  },
-  market_browse:{
-    scene:'village',
-    lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],
-    event:'loot',xpGain:5,itemGained:'lucky acorn',
-    choices:[
-      {text:"A) Head to the meadow",next:'meadow_arrive'},
-      {text:"B) Go to the tavern",next:'tavern_arrive'},
-      {text:"C) Head to the forest",next:'forest_arrive'},
-    ]
-  },
-  village_sage:{
-    scene:'village',
-    lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],
-    event:'loot',xpGain:10,itemGained:'healing herb',
-    choices:[
-      {text:"A) Go to the river",next:'river_arrive'},
-      {text:"B) Go to the forest",next:'forest_arrive'},
-      {text:"C) Head to the meadow",next:'meadow_arrive'},
-    ]
-  },
-  tavern_arrive:{
-    scene:'tavern',
-    lines:["The tavern door creaks open and warm light spills out.","A bard strums a cheerful tune in the corner.","The barkeep slides a frothy mug toward you with a wink."],
-    event:'rest',hpChange:5,
-    choices:[
-      {text:"A) Listen to the bard",next:'tavern_bard'},
-      {text:"B) Ask the barkeep for news",next:'tavern_news'},
-      {text:"C) Head back outside",next:'village_market'},
-    ]
-  },
-  tavern_bard:{
-    scene:'tavern',
-    lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar — and so does your experience!"],
-    event:'rest',xpGain:15,hpChange:3,
-    choices:[
-      {text:"A) Go to the river",next:'river_arrive'},
-      {text:"B) Stay and have another drink",next:'tavern_rest'},
-      {text:"C) Head to the forest",next:'forest_arrive'},
-    ]
-  },
-  tavern_news:{
-    scene:'tavern',
-    lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],
-    event:'none',xpGain:5,
-    choices:[
-      {text:"A) Go find the fox",next:'forest_fox'},
-      {text:"B) Head to the meadow first",next:'meadow_arrive'},
-      {text:"C) Visit the river",next:'river_arrive'},
-    ]
-  },
-  tavern_rest:{
-    scene:'tavern',
-    lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel completely restored."],
-    event:'rest',hpChange:8,
-    choices:[
-      {text:"A) Head to the river",next:'river_arrive'},
-      {text:"B) Go to the forest",next:'forest_arrive'},
-      {text:"C) Explore the meadow",next:'meadow_arrive'},
-    ]
-  },
-  meadow_arrive:{
-    scene:'meadow',
-    lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
-    event:'none',
-    choices:[
-      {text:"A) Pick some flowers",next:'meadow_flowers'},
-      {text:"B) Follow the path to the river",next:'river_arrive'},
-      {text:"C) Chase that rabbit!",next:'meadow_rabbit'},
-    ]
-  },
-  meadow_flowers:{
-    scene:'meadow',
-    lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for just a moment — magical!"],
-    event:'loot',xpGain:8,itemGained:'flower bouquet',
-    choices:[
-      {text:"A) Continue to the river",next:'river_arrive'},
-      {text:"B) Head into the forest",next:'forest_arrive'},
-      {text:"C) Return to the village",next:'start'},
-    ]
-  },
-  meadow_rabbit:{
-    scene:'meadow',
-    lines:["The rabbit darts left, then right — too quick for you!","You tumble into a patch of soft clover. The rabbit watches smugly.","But look — you've found a gold coin in the grass!"],
-    event:'loot',xpGain:5,goldChange:3,
-    choices:[
-      {text:"A) Head to the river",next:'river_arrive'},
-      {text:"B) Go back to the village",next:'start'},
-      {text:"C) Explore the forest",next:'forest_arrive'},
-    ]
-  },
-  river_arrive:{
-    scene:'river',
-    lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],
-    event:'none',
-    choices:[
-      {text:"A) Investigate the glint",next:'river_treasure'},
-      {text:"B) Sit and rest by the bank",next:'river_rest'},
-      {text:"C) Cross into the forest",next:'forest_arrive'},
-    ]
-  },
-  river_treasure:{
-    scene:'river',
-    lines:["You wade in and find a beautiful old lantern under the bridge!","It still glows faintly, as if it has never quite gone out."],
-    event:'loot',xpGain:20,itemGained:'lantern',
-    choices:[
-      {text:"A) Head to the forest",next:'forest_arrive'},
-      {text:"B) Return to the village",next:'start'},
-      {text:"C) Rest by the river",next:'river_rest'},
-    ]
-  },
-  river_rest:{
-    scene:'river',
-    lines:["You sit on a mossy rock and let the sound of the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and completely restored."],
-    event:'rest',hpChange:7,xpGain:5,
-    choices:[
-      {text:"A) Cross to the forest",next:'forest_arrive'},
-      {text:"B) Head back to the village",next:'start'},
-      {text:"C) Go to the meadow",next:'meadow_arrive'},
-    ]
-  },
-  forest_arrive:{
-    scene:'forest',
-    lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, their roots knotted like old friends.","Something rustles in the undergrowth nearby."],
-    event:'none',
-    choices:[
-      {text:"A) Investigate the rustling",next:'forest_rustling'},
-      {text:"B) Search for mushrooms",next:'forest_mushrooms'},
-      {text:"C) Look for the talking fox",next:'forest_fox'},
-    ]
-  },
-  forest_rustling:{
-    scene:'forest',
-    lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart is pounding but you're unharmed — just startled!"],
-    event:'encounter',hpChange:-3,xpGain:12,
-    choices:[
-      {text:"A) Find the fox",next:'forest_fox'},
-      {text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},
-      {text:"C) Head back to the village",next:'start'},
-    ]
-  },
-  forest_mushrooms:{
-    scene:'forest',
-    lines:["You find a cluster of plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful. You gather a generous handful."],
-    event:'loot',xpGain:8,itemGained:'mushroom',
-    choices:[
-      {text:"A) Look for the talking fox",next:'forest_fox'},
-      {text:"B) Head to the river",next:'river_arrive'},
-      {text:"C) Return to the village",next:'start'},
-    ]
-  },
-  forest_fox:{
-    scene:'forest',
-    lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],
-    event:'loot',xpGain:25,itemGained:'map fragment',
-    choices:[
-      {text:"A) Study the map — head to river",next:'river_treasure'},
-      {text:"B) Return to the village with this news",next:'village_sage_end'},
-      {text:"C) Rest in the meadow first",next:'meadow_arrive'},
-    ]
-  },
-  village_sage_end:{
-    scene:'village',
-    lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],
-    event:'loot',xpGain:30,itemGained:'warm scarf',
-    choices:[
-      {text:"A) Continue the adventure",next:'epilogue'},
-      {text:"B) Rest at the tavern first",next:'tavern_rest'},
-      {text:"C) Explore the meadow once more",next:'meadow_arrive'},
-    ]
-  },
-  epilogue:{
-    scene:'meadow',
-    lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],
-    event:'rest',hpChange:20,xpGain:50,
-    choices:[
-      {text:"A) Play again from the start",next:'start'},
-      {text:"B) Explore a little more",next:'meadow_flowers'},
-      {text:"C) Visit the village once more",next:'start'},
-    ]
-  },
+// ── Story nodes ────────────────────────────────────────────────────────
+var STORY={
+  start:{scene:'village',lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],event:'none',choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
+  village_market:{scene:'village',lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],event:'none',choices:[{text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},{text:"B) Browse for something else",next:'market_browse'},{text:"C) Head to the tavern instead",next:'tavern_arrive'}]},
+  buy_cake:{scene:'village',lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],event:'loot',goldChange:-3,itemGained:'honey cake',choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Visit the sage",next:'village_sage'},{text:"C) Go to the tavern",next:'tavern_arrive'}]},
+  market_browse:{scene:'village',lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],event:'loot',xpGain:5,itemGained:'lucky acorn',choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Go to the tavern",next:'tavern_arrive'},{text:"C) Head to the forest",next:'forest_arrive'}]},
+  village_sage:{scene:'village',lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],event:'loot',xpGain:10,itemGained:'healing herb',choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Head to the meadow",next:'meadow_arrive'}]},
+  tavern_arrive:{scene:'tavern',lines:["The tavern door creaks open and warm light spills out.","A bard strums a cheerful tune in the corner.","The barkeep slides a frothy mug toward you with a wink."],event:'rest',hpChange:5,choices:[{text:"A) Listen to the bard",next:'tavern_bard'},{text:"B) Ask the barkeep for news",next:'tavern_news'},{text:"C) Head back outside",next:'village_market'}]},
+  tavern_bard:{scene:'tavern',lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar — and so does your experience!"],event:'rest',xpGain:15,hpChange:3,choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Stay and have another drink",next:'tavern_rest'},{text:"C) Head to the forest",next:'forest_arrive'}]},
+  tavern_news:{scene:'tavern',lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],event:'none',xpGain:5,choices:[{text:"A) Go find the fox",next:'forest_fox'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
+  tavern_rest:{scene:'tavern',lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel completely restored."],event:'rest',hpChange:8,choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Explore the meadow",next:'meadow_arrive'}]},
+  meadow_arrive:{scene:'meadow',lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],event:'none',choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}]},
+  meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for just a moment — magical!"],event:'loot',xpGain:8,itemGained:'flower bouquet',choices:[{text:"A) Continue to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
+  meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into a patch of soft clover. The rabbit watches smugly.","But look — you've found a gold coin in the grass!"],event:'loot',xpGain:5,goldChange:3,choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go back to the village",next:'start'},{text:"C) Explore the forest",next:'forest_arrive'}]},
+  river_arrive:{scene:'river',lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],event:'none',choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}]},
+  river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It still glows faintly, as if it has never quite gone out."],event:'loot',xpGain:20,itemGained:'lantern',choices:[{text:"A) Head to the forest",next:'forest_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Rest by the river",next:'river_rest'}]},
+  river_rest:{scene:'river',lines:["You sit on a mossy rock and let the sound of the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and completely restored."],event:'rest',hpChange:7,xpGain:5,choices:[{text:"A) Cross to the forest",next:'forest_arrive'},{text:"B) Head back to the village",next:'start'},{text:"C) Go to the meadow",next:'meadow_arrive'}]},
+  forest_arrive:{scene:'forest',lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, their roots knotted like old friends.","Something rustles in the undergrowth nearby."],event:'none',choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox'}]},
+  forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart is pounding but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,choices:[{text:"A) Find the fox",next:'forest_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
+  forest_mushrooms:{scene:'forest',lines:["You find a cluster of plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful. You gather a generous handful."],event:'loot',xpGain:8,itemGained:'mushroom',choices:[{text:"A) Look for the talking fox",next:'forest_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
+  forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],event:'loot',xpGain:25,itemGained:'map fragment',choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village with this news",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
+  village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
+  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]},
 };
 
 // ── UI ─────────────────────────────────────────────────────────────────
-const EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️','fish':'🐟','key':'🗝️'};
+var EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️','fish':'🐟','key':'🗝️'};
 
 function updateStats(){
-  document.getElementById('hptx').textContent=`${S.hp}/${S.maxHp}`;
+  document.getElementById('hptx').textContent=S.hp+'/'+S.maxHp;
   document.getElementById('bhp').style.width=Math.max(0,(S.hp/S.maxHp)*100)+'%';
   document.getElementById('xptx').textContent=S.xp;
   document.getElementById('bxp').style.width=Math.min(100,S.xp%100)+'%';
   document.getElementById('gtx').textContent=S.gold;
-  document.getElementById('loctx').textContent=S.scene;
-  const sl=document.getElementById('islots');sl.innerHTML='';
-  for(let i=0;i<8;i++){const d=document.createElement('div');d.className='isl';d.textContent=S.inv[i]?(EMOJIS[S.inv[i].toLowerCase()]||'📦'):'·';if(S.inv[i])d.title=S.inv[i];sl.appendChild(d);}
+  document.getElementById('loctx').textContent=S.scene==='intro'?'the road':S.scene;
+  var sl=document.getElementById('islots');sl.innerHTML='';
+  for(var i=0;i<8;i++){var d=document.createElement('div');d.className='isl';d.textContent=S.inv[i]?(EMOJIS[S.inv[i].toLowerCase()]||'📦'):'·';if(S.inv[i])d.title=S.inv[i];sl.appendChild(d);}
 }
 
-function log(text,cls=''){
-  const b=document.getElementById('log'),d=document.createElement('div');
+function log(text,cls){
+  var b=document.getElementById('log'),d=document.createElement('div');
   d.className='ll'+(cls?' '+cls:'');d.textContent=text;
   b.appendChild(d);b.scrollTop=b.scrollHeight;
   if(b.children.length>80)b.removeChild(b.children[0]);
 }
 
+var skipTypewriter=false;
+
 function showSkipBtn(onSkip){
-  const inn=document.getElementById('cinn');
+  var inn=document.getElementById('cinn');
   inn.innerHTML='<button class="cb" style="flex:none;opacity:0.7" id="skipbtn" onclick="skipNow()">▶▶ SKIP</button>';
-  window._skipCallback=onSkip;
+  window._skipCb=onSkip;
 }
 function skipNow(){
   skipTypewriter=true;
-  document.getElementById('skipbtn')?.remove();
-  if(window._skipCallback){window._skipCallback();window._skipCallback=null;}
+  var btn=document.getElementById('skipbtn');if(btn)btn.remove();
+  if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
 function hideSkipBtn(){
   skipTypewriter=false;
-  document.getElementById('skipbtn')?.remove();
+  var btn=document.getElementById('skipbtn');if(btn)btn.remove();
 }
 
 function typewriterLog(text,cls,onDone){
-  const b=document.getElementById('log'),d=document.createElement('div');
-  d.className='ll'+(cls?' '+cls:'');
-  d.textContent='';b.appendChild(d);
+  var b=document.getElementById('log'),d=document.createElement('div');
+  d.className='ll'+(cls?' '+cls:'');d.textContent='';b.appendChild(d);
   if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;if(onDone)onDone();return;}
-  let i=0;
-  const iv=setInterval(()=>{
+  var i=0;
+  var iv=setInterval(function(){
     if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;clearInterval(iv);if(onDone)onDone();return;}
     d.textContent+=text[i++];b.scrollTop=b.scrollHeight;
     if(i>=text.length){clearInterval(iv);if(onDone)onDone();}
@@ -628,108 +503,80 @@ function typewriterLog(text,cls,onDone){
 
 function typewriterLines(lines,cls,onDone){
   skipTypewriter=false;
-  let i=0;
+  var i=0;
   function next(){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
-    typewriterLog(lines[i++],cls,()=>setTimeout(next,120));
+    typewriterLog(lines[i++],cls,function(){setTimeout(next,120);});
   }
-  // show skip button while lines are typing
-  showSkipBtn(()=>{
-    // complete all remaining lines instantly
+  showSkipBtn(function(){
     skipTypewriter=true;
-    // let the intervals finish naturally via the skipTypewriter flag
-    // then call onDone after a brief delay
-    setTimeout(()=>{
-      // print any remaining lines instantly
-      const b=document.getElementById('log');
-      while(i<lines.length){
-        const d=document.createElement('div');
-        d.className='ll'+(cls?' '+cls:'');
-        d.textContent=lines[i++];
-        b.appendChild(d);
-      }
+    setTimeout(function(){
+      var b=document.getElementById('log');
+      while(i<lines.length){var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');d.textContent=lines[i++];b.appendChild(d);}
       b.scrollTop=b.scrollHeight;
-      hideSkipBtn();
-      if(onDone)onDone();
+      hideSkipBtn();if(onDone)onDone();
     },80);
   });
   next();
 }
 
-function setSt(msg){document.getElementById('cinn').innerHTML=`<span id="stxt">${msg}</span>`;}
+function setSt(msg){document.getElementById('cinn').innerHTML='<span id="stxt">'+msg+'</span>';}
 
 function renderChoices(choices){
-  const inn=document.getElementById('cinn');inn.innerHTML='';
-  choices.forEach(c=>{const b=document.createElement('button');b.className='cb';b.textContent=c.text;b.onclick=()=>onChoice(c.next);inn.appendChild(b);});
+  var inn=document.getElementById('cinn');inn.innerHTML='';
+  choices.forEach(function(c){
+    var b=document.createElement('button');b.className='cb';b.textContent=c.text;
+    b.onclick=function(){onChoice(c.next);};inn.appendChild(b);
+  });
 }
 
-function disableCh(){document.querySelectorAll('.cb').forEach(b=>b.disabled=true);}
+function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disabled=true;});}
 
-// ── Story progression ──────────────────────────────────────────────────
+// ── Story engine ───────────────────────────────────────────────────────
 function goToNode(nodeId){
-  const node=STORY[nodeId];
-  if(!node){log('[The path ends here...]','s');return;}
-
-  // Apply effects
-  if(node.hpChange) S.hp=Math.min(S.maxHp,Math.max(0,S.hp+node.hpChange));
-  if(node.xpGain) S.xp+=node.xpGain;
-  if(node.goldChange) S.gold=Math.max(0,S.gold+node.goldChange);
-  if(node.itemGained&&S.inv.length<8) S.inv.push(node.itemGained);
+  var node=STORY[nodeId];if(!node){log('[The path ends here...]','s');return;}
+  if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
+  if(node.xpGain)S.xp+=node.xpGain;
+  if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
+  if(node.itemGained&&S.inv.length<8)S.inv.push(node.itemGained);
   updateStats();
-
-  // Sound effects
-  if(node.event==='loot') sndPickup();
-  else if(node.goldChange>0) sndCoin();
-  else if(node.event==='rest') sndHeal();
-  else if(node.event==='encounter'&&node.hpChange<0) sndBump();
+  if(node.event==='loot')sndPickup();
+  else if((node.goldChange||0)>0)sndCoin();
+  else if(node.event==='rest')sndHeal();
+  else if(node.event==='encounter'&&(node.hpChange||0)<0)sndBump();
   narrativeSounds(node.lines);
-
-  // Narrative class
-  const cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
-
-  // Speak & display in sync
-  narrativeSounds(node.lines);
-
-  const finish=()=>{
-    typewriterLines(node.lines,cls,()=>{
+  var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
+  var finish=function(){
+    typewriterLines(node.lines,cls,function(){
       if(S.hp<=0){
-        typewriterLog('💤 You collapse gently in the grass... what a journey!','s',()=>{
+        typewriterLog('💤 You collapse gently in the grass... what a journey!','s',function(){
           document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
-        });
-        return;
+        });return;
       }
       renderChoices(node.choices);
     });
     speak(node.lines.join(' '));
   };
-
-  animateWalkOut(node.scene, finish);
+  animateWalkOut(node.scene,finish);
 }
 
-function onChoice(nextId){
-  disableCh();
-  setSt('▸ Walking...');
-  goToNode(nextId);
-}
+function onChoice(nextId){disableCh();setSt('▸ Walking...');goToNode(nextId);}
 
 function startGame(){
+  stopLobbyMusic();
   S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.scene='intro';
   charX=160;charState='idle';
   updateStats();
   document.getElementById('log').innerHTML='';
-  document.getElementById('loctx').textContent='???';
   log('Welcome to Maplehaven, Wanderer. ✦','s');
-  // walk into the village from the intro screen
-  setTimeout(()=>animateWalkOut('village',()=>{
-    playAmbient('village');
-    goToNode('start');
-  }),400);
+  setTimeout(function(){animateWalkOut('village',function(){playAmbient('village');goToNode('start');});},400);
 }
 
-window.onload=()=>{
+window.onload=function(){
   resizeCanvas();window.addEventListener('resize',resizeCanvas);
   renderScene();updateStats();
   log('Welcome, Wanderer. ✦','s');
+  startLobbyMusic();
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
 };
 </script>
