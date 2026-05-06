@@ -31,7 +31,8 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 .isl{background:#0e0c04;border:2px solid #5a4020;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;}
 .isl:hover{border-color:#e8c040;}
 .isl .itip{display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#1a1208;border:1px solid #7a6030;color:#e8c040;font-size:6px;padding:3px 5px;white-space:nowrap;z-index:10;}
-.isl:hover .itip{display:block;}
+.isl.glow{border-color:#e8c040;box-shadow:0 0 8px #e8c04088;animation:invglow 1s ease-out forwards;}
+@keyframes invglow{0%{border-color:#e8c040;box-shadow:0 0 12px #e8c040;}100%{border-color:#5a4020;box-shadow:none;}}
 .ipag{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;cursor:pointer;line-height:1;}
 .ipag:hover{border-color:#e8c040;color:#e8c040;}
 #gld{margin-left:auto;font-size:8px;color:#e8c040;}
@@ -51,6 +52,9 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 <body>
 <div id="press-overlay" onclick="unlockAndStart()">
   <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
+  <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
+    Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
+  </div>
 </div>
 <div id="wrap">
   <div id="topbar">
@@ -90,7 +94,7 @@ var AMBIENT={
   forest: BASE+'427400__imjeax__forest-ambient-loop.wav',
   meadow: BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav'
 };
-var AVOL={village:0.25,river:0.4,tavern:0.3,forest:0.4,meadow:0.45};
+var AVOL={village:0.15,river:0.12,tavern:0.18,forest:0.2,meadow:0.22};
 var DOOR_URL =BASE+'460542__coosemek__door-creak.wav';
 var MEOW_URL =BASE+'528197__fthgurdy__cat-meow-1.wav';
 var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
@@ -130,7 +134,7 @@ function stopLobby(cb){
 var bard=null;
 function startBard(){
   if(bard||!soundOn)return;
-  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.28,1500);
+  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.12,1500);
 }
 function stopBard(){if(!bard)return;var b=bard;bard=null;fadeVol(b,b.volume,0,1000,function(){b.pause();b.src='';});}
 function tavernEnter(){
@@ -196,14 +200,20 @@ function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();
 // ── Character ──────────────────────────────────────────────────────────
 var charX=160,charY=0.72,charScale=1,charState='idle',charDir=1;
 var pendingCb=null,pendingScene=null,af=0;
-// Cat sidekick
+// Cat sidekick — hide during scene transitions, reappear after
 var catVisible=false,catX=120,catY=0,catHistory=[];
 function showCat(){
   if(catVisible)return;catVisible=true;
   catX=charX-24;catY=Math.round(charY*PH);catHistory=[];
 }
 function tickChar(){
-  if(charState==='walkout'){charX+=2;if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}}
+  if(charState==='walkout'){
+    charX+=2;
+    if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';
+      // Reset cat to just behind entry point so it doesn't fly across
+      if(catVisible){catX=-40;catY=Math.round(charY*PH);catHistory=[];}
+    }
+  }
   else if(charState==='walkin'){charX+=2;if(charX>=PW/2){charX=PW/2;charState='idle';stopSteps();if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}}}
   else if(charState==='walkup'){charY-=0.003;charScale=Math.max(0.15,charScale-0.008);if(charScale<=0.18){charState='idle';if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}}}
   if(catVisible){
@@ -281,10 +291,11 @@ function drawCat(x,y){
   x=Math.round(x);y=Math.round(y);
   var walking=charState!=='idle';
   var bob=walking?(Math.floor(af/8)%2?1:0):0;
-  // wagging tail — always animates
-  var tailWag=Math.floor(af/10)%3;
-  var tx=tailWag===0?-4:tailWag===1?-5:-3;
-  var ty=tailWag===0?-2:tailWag===1?-4:-1;
+  // tail wag — slow, subtle flick every ~3 seconds
+  var tailCycle=Math.floor(af/180)%4; // 0,1,2,3 — only flicks on 3
+  var tailWag=tailCycle===3?1:0;
+  var tx=tailWag?-5:-4;
+  var ty=tailWag?-4:-2;
   // shadow
   cx.fillStyle='rgba(0,0,0,0.2)';cx.beginPath();cx.ellipse(x+5,y+3,5,2,0,0,Math.PI*2);cx.fill();
   // body
