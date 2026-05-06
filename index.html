@@ -495,6 +495,8 @@ function showSkipBtn(onSkip){
 }
 function skipNow(){
   skipTypewriter=true;
+  // Stop current narration
+  if(curAudio){curAudio.pause();curAudio=null;}
   var btn=document.getElementById('skipbtn');if(btn)btn.remove();
   if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
@@ -515,18 +517,28 @@ function typewriterLog(text,cls,onDone){
   },28);
 }
 
-function typewriterLines(lines,cls,onDone){
+function typewriterLines(lines,cls,onDone,soundTriggers){
   skipTypewriter=false;
+  soundTriggers=soundTriggers||{};
   var i=0;
   function next(){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
-    typewriterLog(lines[i++],cls,function(){setTimeout(next,120);});
+    var idx=i;
+    var line=lines[i++];
+    // Speak this line as it starts typing
+    speak(line);
+    // Trigger any sound effect for this line index
+    if(soundTriggers[idx])setTimeout(soundTriggers[idx],300);
+    typewriterLog(line,cls,function(){setTimeout(next,120);});
   }
   showSkipBtn(function(){
     skipTypewriter=true;
     setTimeout(function(){
       var b=document.getElementById('log');
-      while(i<lines.length){var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');d.textContent=lines[i++];b.appendChild(d);}
+      while(i<lines.length){
+        var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');
+        d.textContent=lines[i++];b.appendChild(d);
+      }
       b.scrollTop=b.scrollHeight;
       hideSkipBtn();if(onDone)onDone();
     },80);
@@ -584,25 +596,19 @@ function goToNode(nodeId){
 function onChoice(nextId){disableCh();setSt('▸ Walking...');goToNode(nextId);}
 
 function startGame(){
-  // Start lobby music on first click (bypasses autoplay block)
-  startLobbyMusic();
-  // Give music a moment then fade it out and begin
-  setTimeout(function(){
-    stopLobbyMusic();
-    S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
-    S.scene='intro';
-    charX=-20;charState='walkin';
-    updateStats();
-    document.getElementById('log').innerHTML='';
-    log('Welcome to Maplehaven, Wanderer. ✦','s');
-    // Walk character in from left, then start story once centred
-    pendingScene='village';
-    pendingCallback=function(){
-      S.scene='village';
-      playAmbient('village');
-      goToNodeNoWalk('start');
-    };
-  },100);
+  stopLobbyMusic();
+  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
+  S.scene='intro';
+  charX=-20;charState='walkin';
+  updateStats();
+  document.getElementById('log').innerHTML='';
+  log('Welcome to Maplehaven, Wanderer. ✦','s');
+  pendingScene='village';
+  pendingCallback=function(){
+    S.scene='village';
+    playAmbient('village');
+    goToNodeNoWalk('start');
+  };
 }
 
 // Like goToNode but skips the walk animation (scene already set)
@@ -631,6 +637,17 @@ window.onload=function(){
   resizeCanvas();window.addEventListener('resize',resizeCanvas);
   renderScene();updateStats();
   log('Welcome, Wanderer. ✦','s');
+  // Start lobby music immediately on page load
+  // Most browsers block autoplay, so we also retry on first interaction
+  lobbyMusic=new Audio(LOBBY_URL);
+  lobbyMusic.loop=true;lobbyMusic.volume=0.5;
+  lobbyMusic.play().catch(function(){
+    // Autoplay blocked — start on first click
+    document.addEventListener('click',function tryPlay(){
+      if(lobbyMusic){lobbyMusic.play().catch(function(){});}
+      document.removeEventListener('click',tryPlay);
+    },{once:true});
+  });
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
 };
 </script>
