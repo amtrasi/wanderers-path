@@ -64,7 +64,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
   <button class="povbtn" onclick="resumeGame()">▸ RESUME</button>
   <button class="povbtn" style="margin-top:8px;border-color:#5a4020;color:#806020;" onclick="returnHome()">⌂ RETURN TO START</button>
 </div>
-<div id="press-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,6,0,0.96);flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:12px;">
+<div id="press-overlay" style="display:flex;position:fixed;inset:0;background:rgba(10,6,0,0.96);flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:12px;" onclick="unlockAndStart()">
   <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
   <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
     Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
@@ -114,7 +114,7 @@ var MEOW_URL =BASE+'hazel-meow.m4a';
 var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL=BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var BARD_URL =BASE+'769807__soundsandrebounds__shakespeare-lover-and-his-lass-lute-and-wood-flute.wav';
-var XI_KEY   ='sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
+var XI_KEY   ='sk_40d41212af4d0aba30f960ca3d2cf8fce273a5d8e38fa75a';
 var XI_VOICE ='JBFqnCBsd6RMkjVDRZzb';
 
 // ── State ──────────────────────────────────────────────────────────────
@@ -196,7 +196,9 @@ function toggleSound(){
   else{if(amb)amb.play().catch(function(){});if(steps_)steps_.play().catch(function(){});if(lobby)lobby.play().catch(function(){});if(bard)bard.play().catch(function(){});}
 }
 function unlockAndStart(){
-  var ov=document.getElementById('press-overlay');if(ov)ov.style.display='none';
+  var ov=document.getElementById('press-overlay');
+  if(!ov||ov.style.display==='none')return; // already dismissed
+  ov.style.display='none';
   soundOn=true;document.getElementById('sbtn').textContent='♫ SOUND: ON';
   lobby=new Audio(LOBBY_URL);lobby.loop=true;lobby.volume=0.5;lobby.play().catch(function(){});
 }
