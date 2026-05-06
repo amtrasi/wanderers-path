@@ -6,46 +6,52 @@
 <title>The Wanderer's Path</title>
 <link rel="icon" href="favicon.ico">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:#1a1208;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;padding:8px;}
-  #wrap{width:100%;max-width:800px;border:3px solid #7a6030;box-shadow:0 0 40px #00000088;}
-  #topbar{background:#2a1e08;border-bottom:2px solid #7a6030;padding:5px 12px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
-  #gametitle{color:#e8c040;font-size:9px;letter-spacing:1px;text-shadow:2px 2px #000;}
-  .tbtn{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:7px;padding:3px 7px;cursor:pointer;white-space:nowrap;}
-  .tbtn:hover{border-color:#e8c040;color:#e8c040;}
-  #scene-wrap{position:relative;width:100%;line-height:0;}
-  #scene{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
-  #press-overlay{position:fixed;inset:0;background:rgba(10,6,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:1000;}
-  #press-overlay p{color:#e8c040;font-size:9px;letter-spacing:2px;text-shadow:0 0 12px #e8c04088;white-space:nowrap;animation:blink 1.2s step-end infinite;}
-  #press-overlay small{color:#a08030;font-size:6px;margin-top:8px;letter-spacing:1px;}
-  @keyframes blink{50%{opacity:0;}}
-  #hud{position:absolute;top:6px;left:6px;background:#1a1208ee;border:2px solid #7a6030;padding:6px 8px;font-size:7px;color:#a08030;min-width:110px;}
-  .hr{display:flex;justify-content:space-between;margin-bottom:4px;gap:8px;}
-  .hv{color:#e8c040;}
-  .hb{background:#0a0800;border:1px solid #5a4020;height:6px;margin-bottom:5px;width:100%;}
-  .hbf{height:100%;transition:width 0.3s;}
-  #bhp{background:linear-gradient(90deg,#a01010,#e03020);}
-  #bxp{background:linear-gradient(90deg,#103090,#2050d0);}
-  #inv-bar{background:#1e1608;border-top:2px solid #5a4020;border-bottom:2px solid #5a4020;padding:5px 10px;display:flex;align-items:center;gap:4px;}
-  .ilbl{font-size:6px;color:#7a6030;margin-right:3px;}
-  .isl{background:#0e0c04;border:2px solid #5a4020;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;}
-  .isl:hover{border-color:#e8c040;}
-  #gld{margin-left:auto;font-size:8px;color:#e8c040;}
-  #log{background:#120e04;border-bottom:2px solid #5a4020;padding:10px 14px;min-height:180px;max-height:260px;overflow-y:auto;}
-  #log::-webkit-scrollbar{width:3px;}
-  #log::-webkit-scrollbar-thumb{background:#5a4020;}
-  .ll{font-size:8px;line-height:1.9;color:#c8a840;margin-bottom:1px;}
-  .ll.g{color:#60b840;}.ll.b{color:#c04030;}.ll.s{color:#e8c040;}
-  #cbar{background:#1a1208;border-top:2px solid #5a4020;padding:6px 8px;min-height:52px;display:flex;align-items:center;}
-  #cinn{display:flex;flex-wrap:wrap;gap:5px;width:100%;}
-  .cb{background:#0e0c04;border:2px solid #5a402088;color:#c8a840;font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 8px;cursor:pointer;flex:1;min-width:140px;text-align:left;line-height:1.6;}
-  .cb:hover{background:#2a2008;border-color:#e8c040;color:#e8c040;}
-  .cb:disabled{opacity:0.3;cursor:not-allowed;}
-  #stxt{color:#a08030;font-size:7px;}
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1a1208;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;padding:8px;}
+#wrap{width:100%;max-width:800px;border:3px solid #7a6030;box-shadow:0 0 40px #00000088;}
+#topbar{background:#2a1e08;border-bottom:2px solid #7a6030;padding:5px 12px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+#gametitle{color:#e8c040;font-size:9px;letter-spacing:1px;text-shadow:2px 2px #000;}
+.tbtn{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:7px;padding:3px 7px;cursor:pointer;white-space:nowrap;}
+.tbtn:hover{border-color:#e8c040;color:#e8c040;}
+#scene-wrap{position:relative;width:100%;line-height:0;}
+#scene{width:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
+#press-overlay{position:fixed;inset:0;background:rgba(10,6,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:1000;}
+#press-overlay p{color:#e8c040;font-size:9px;letter-spacing:2px;text-shadow:0 0 12px #e8c04088;white-space:nowrap;animation:blink 1.2s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+#hud{position:absolute;top:6px;left:6px;background:#1a1208ee;border:2px solid #7a6030;padding:6px 8px;font-size:7px;color:#a08030;min-width:110px;}
+.hr{display:flex;justify-content:space-between;margin-bottom:4px;gap:8px;}
+.hv{color:#e8c040;}
+.hb{background:#0a0800;border:1px solid #5a4020;height:6px;margin-bottom:5px;width:100%;}
+.hbf{height:100%;transition:width 0.3s;}
+#bhp{background:linear-gradient(90deg,#a01010,#e03020);}
+#bxp{background:linear-gradient(90deg,#103090,#2050d0);}
+#inv-bar{background:#1e1608;border-top:2px solid #5a4020;border-bottom:2px solid #5a4020;padding:5px 10px;display:flex;align-items:center;gap:4px;}
+.ilbl{font-size:6px;color:#7a6030;margin-right:3px;}
+.isl{background:#0e0c04;border:2px solid #5a4020;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;}
+.isl:hover{border-color:#e8c040;}
+.isl .itip{display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#1a1208;border:1px solid #7a6030;color:#e8c040;font-size:6px;padding:3px 5px;white-space:nowrap;z-index:10;}
+.isl:hover .itip{display:block;}
+.ipag{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;cursor:pointer;line-height:1;}
+.ipag:hover{border-color:#e8c040;color:#e8c040;}
+#gld{margin-left:auto;font-size:8px;color:#e8c040;}
+#log{background:#120e04;border-bottom:2px solid #5a4020;padding:10px 14px;min-height:180px;max-height:260px;overflow-y:auto;}
+#log::-webkit-scrollbar{width:3px;}
+#log::-webkit-scrollbar-thumb{background:#5a4020;}
+.ll{font-size:8px;line-height:1.9;color:#c8a840;margin-bottom:1px;}
+.ll.g{color:#60b840;}.ll.b{color:#c04030;}.ll.s{color:#e8c040;}
+#cbar{background:#1a1208;border-top:2px solid #5a4020;padding:6px 8px;min-height:52px;display:flex;align-items:center;}
+#cinn{display:flex;flex-wrap:wrap;gap:5px;width:100%;}
+.cb{background:#0e0c04;border:2px solid #5a402088;color:#c8a840;font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 8px;cursor:pointer;flex:1;min-width:140px;text-align:left;line-height:1.6;}
+.cb:hover{background:#2a2008;border-color:#e8c040;color:#e8c040;}
+.cb:disabled{opacity:0.3;cursor:not-allowed;}
+#stxt{color:#a08030;font-size:7px;}
 </style>
 </head>
 <body>
+<div id="press-overlay" onclick="unlockAndStart()">
+  <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
+</div>
 <div id="wrap">
   <div id="topbar">
     <span id="gametitle">✦ THE WANDERER'S PATH ✦</span>
@@ -56,9 +62,6 @@
   </div>
   <div id="scene-wrap">
     <canvas id="scene"></canvas>
-    <div id="press-overlay" onclick="unlockAndStart()">
-      <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
-    </div>
     <div id="hud">
       <div class="hr">HP <span class="hv" id="hptx">20/20</span></div>
       <div class="hb"><div class="hbf" id="bhp" style="width:100%"></div></div>
@@ -69,119 +72,82 @@
   </div>
   <div id="inv-bar">
     <span class="ilbl">INVENTORY</span>
+    <button class="ipag" id="invprev" onclick="invPage(-1)">◀</button>
     <div id="islots" style="display:flex;gap:3px;"></div>
+    <button class="ipag" id="invnext" onclick="invPage(1)">▶</button>
     <span id="gld">🟡 <span id="gtx">5</span> gold</span>
   </div>
   <div id="log"></div>
   <div id="cbar"><div id="cinn"><span id="stxt">▸ Loading...</span></div></div>
 </div>
 <script>
-// ── Constants ──────────────────────────────────────────────────────────
-var PW=320, PH=180;
+var PW=320,PH=180;
 var BASE='https://amtrasi.github.io/wanderers-path/audio/';
 var AMBIENT={
-  village: BASE+'580150__dan_audiofile__birmingham-open-air-market.wav',
-  river:   BASE+'222752__minian89__babbling_brook_loop.wav',
-  tavern:  BASE+'695295__brunoboselli__pirate-tavern.wav',
-  forest:  BASE+'427400__imjeax__forest-ambient-loop.wav',
-  meadow:  BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav'
+  village:BASE+'580150__dan_audiofile__birmingham-open-air-market.wav',
+  river:  BASE+'222752__minian89__babbling_brook_loop.wav',
+  tavern: BASE+'695295__brunoboselli__pirate-tavern.wav',
+  forest: BASE+'427400__imjeax__forest-ambient-loop.wav',
+  meadow: BASE+'752461__silverillusionist__windy-day-on-the-prairie-soundscape.wav'
 };
-var DOOR_URL  = BASE+'460542__coosemek__door-creak.wav';
-var MEOW_URL  = BASE+'528197__fthgurdy__cat-meow-1.wav';
-var LOBBY_URL = BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
-var STEPS_URL = BASE+'816019__qubodup__fps-footsteps-loop.wav';
-var XI_KEY    = 'sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
-var XI_VOICE  = 'JBFqnCBsd6RMkjVDRZzb'; // George
+var AVOL={village:0.25,river:0.4,tavern:0.3,forest:0.4,meadow:0.45};
+var DOOR_URL =BASE+'460542__coosemek__door-creak.wav';
+var MEOW_URL =BASE+'528197__fthgurdy__cat-meow-1.wav';
+var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
+var STEPS_URL=BASE+'816019__qubodup__fps-footsteps-loop.wav';
+var BARD_URL =BASE+'769807__soundsandrebounds__shakespeare-lover-and-his-lass-lute-and-wood-flute.wav';
+var XI_KEY   ='sk_ba08c6246de3fc999a143a77c6c31601acb3dac580a14f26';
+var XI_VOICE ='JBFqnCBsd6RMkjVDRZzb';
 
 // ── State ──────────────────────────────────────────────────────────────
-var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
-var soundOn=true, voiceOn=true;
+var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
+var soundOn=false,voiceOn=true;
+var invPage_=0; // current inventory page (4 slots per page)
+var INV_PER_PAGE=4;
 
 // ── Audio ──────────────────────────────────────────────────────────────
 var actx=null;
 function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
-
-// Single ambient channel — only one plays at a time
-var amb=null, ambScene=null;
-function setAmbient(scene){
-  if(ambScene===scene) return;
-  var url=AMBIENT[scene]; if(!url) return;
-  // Stop old
-  if(amb){var old=amb;old.pause();old.src='';amb=null;}
-  ambScene=scene;
-  if(!soundOn) return;
-  var a=new Audio(url);
-  a.loop=true; a.volume=0;
-  a.play().catch(function(){});
-  fadeVol(a,0,0.35,1200);
-  amb=a;
-}
-function stopAmbient(){
-  if(amb){amb.pause();amb.src='';amb=null;ambScene=null;}
-}
-
 function fadeVol(audio,from,to,dur,cb){
   var steps=40,iv=dur/steps,delta=(to-from)/steps,v=from,n=0;
-  var t=setInterval(function(){
-    v+=delta; n++;
-    audio.volume=Math.max(0,Math.min(1,v));
-    if(n>=steps){clearInterval(t);if(cb)cb();}
-  },iv);
+  var t=setInterval(function(){v+=delta;n++;audio.volume=Math.max(0,Math.min(1,v));if(n>=steps){clearInterval(t);if(cb)cb();}},iv);
 }
-
-// Lobby music — separate channel
+var amb=null,ambScene=null;
+function setAmbient(scene){
+  if(ambScene===scene)return;
+  var url=AMBIENT[scene];if(!url)return;
+  if(amb){var o=amb;o.pause();o.src='';amb=null;}
+  ambScene=scene;if(!soundOn)return;
+  var a=new Audio(url);a.loop=true;a.volume=0;a.play().catch(function(){});
+  fadeVol(a,0,AVOL[scene]||0.35,1200);amb=a;
+}
+function stopAmbient(){if(amb){amb.pause();amb.src='';amb=null;ambScene=null;}}
 var lobby=null;
-function startLobby(){
-  if(lobby) return;
-  lobby=new Audio(LOBBY_URL);
-  lobby.loop=true; lobby.volume=0.5;
-  if(!soundOn) return;
-  lobby.play().catch(function(){});
-}
 function stopLobby(cb){
   if(!lobby){if(cb)cb();return;}
-  var l=lobby; lobby=null;
-  fadeVol(l,l.volume,0,800,function(){l.pause();l.src='';if(cb)cb();});
+  var l=lobby;lobby=null;fadeVol(l,l.volume,0,800,function(){l.pause();l.src='';if(cb)cb();});
 }
-
-// Tavern: door creak then fade in tavern ambient
+var bard=null;
+function startBard(){
+  if(bard||!soundOn)return;
+  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.28,1500);
+}
+function stopBard(){if(!bard)return;var b=bard;bard=null;fadeVol(b,b.volume,0,1000,function(){b.pause();b.src='';});}
 function tavernEnter(){
-  stopAmbient();
-  ambScene='tavern';
-  if(!soundOn){
-    var a=new Audio(AMBIENT.tavern);a.loop=true;a.volume=0.35;
-    amb=a; return;
-  }
-  var door=new Audio(DOOR_URL); door.volume=0.9; door.play().catch(function(){});
-  var a=new Audio(AMBIENT.tavern); a.loop=true; a.volume=0;
-  a.play().catch(function(){});
-  setTimeout(function(){fadeVol(a,0,0.35,1200);},1400);
-  amb=a;
+  stopAmbient();ambScene='tavern';
+  if(!soundOn){var a=new Audio(AMBIENT.tavern);a.loop=true;a.volume=AVOL.tavern;amb=a;return;}
+  new Audio(DOOR_URL).play().catch(function(){});
+  var a=new Audio(AMBIENT.tavern);a.loop=true;a.volume=0;a.play().catch(function(){});
+  setTimeout(function(){fadeVol(a,0,AVOL.tavern,1200);startBard();},1400);amb=a;
 }
-
-// Footsteps
-var steps=null;
-function startSteps(){
-  if(steps) return;
-  if(!soundOn) return;
-  steps=new Audio(STEPS_URL);
-  steps.loop=true; steps.volume=0.5;
-  steps.play().catch(function(){});
-}
-function stopSteps(){
-  if(steps){steps.pause();steps.currentTime=0;steps=null;}
-}
-
-// Synth fx
+var steps_=null;
+function startSteps(){if(steps_||!soundOn)return;steps_=new Audio(STEPS_URL);steps_.loop=true;steps_.volume=0.5;steps_.play().catch(function(){});}
+function stopSteps(){if(steps_){steps_.pause();steps_.currentTime=0;steps_=null;}}
 function tn(f,d,delay,vol,type){
-  if(!soundOn)return;
-  delay=delay||0;vol=vol||0.06;type=type||'sine';
+  if(!soundOn)return;delay=delay||0;vol=vol||0.06;type=type||'sine';
   try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
   o.connect(g);g.connect(ctx.destination);o.type=type;o.frequency.value=f;
-  var t=ctx.currentTime+delay;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);
-  g.gain.exponentialRampToValueAtTime(0.001,t+d);
-  o.start(t);o.stop(t+d+0.05);}catch(e){}
+  var t=ctx.currentTime+delay;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.03);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.start(t);o.stop(t+d+0.05);}catch(e){}
 }
 function sndPickup(){[523,659,784].forEach(function(f,i){tn(f,0.18,i*0.1);});}
 function sndCoin(){tn(880,0.1);tn(1100,0.1,0.08);}
@@ -190,213 +156,153 @@ function sndBump(){tn(220,0.12,0,0.05,'square');tn(180,0.14,0.09,0.04,'square');
 function sndBird(){
   if(!soundOn)return;
   [[0,900,1100],[0.15,1000,1300]].forEach(function(arr){
-    try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);o.type='sine';
-    var t=ctx.currentTime+arr[0];
-    o.frequency.setValueAtTime(arr[1],t);o.frequency.linearRampToValueAtTime(arr[2],t+0.08);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-    o.start(t);o.stop(t+0.12);}catch(e){}
+    try{var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';
+    var t=ctx.currentTime+arr[0];o.frequency.setValueAtTime(arr[1],t);o.frequency.linearRampToValueAtTime(arr[2],t+0.08);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);o.start(t);o.stop(t+0.12);}catch(e){}
   });
 }
 function playCatMeow(){
   if(!soundOn)return;
-  try{
-    var ctx=ac(),audio=new Audio(MEOW_URL);
-    var src=ctx.createMediaElementSource(audio);
-    var gain=ctx.createGain(); gain.gain.value=3.5;
-    src.connect(gain); gain.connect(ctx.destination);
-    audio.play().catch(function(){});
-  }catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
+  try{var ctx=ac(),audio=new Audio(MEOW_URL);var src=ctx.createMediaElementSource(audio);var gain=ctx.createGain();gain.gain.value=3.5;src.connect(gain);gain.connect(ctx.destination);audio.play().catch(function(){});}
+  catch(e){var a=new Audio(MEOW_URL);a.volume=1.0;a.play().catch(function(){});}
 }
-
 function toggleSound(){
-  soundOn=!soundOn;
-  document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
-  if(!soundOn){
-    if(amb){amb.pause();}
-    if(steps){steps.pause();}
-    if(lobby){lobby.pause();}
-  } else {
-    if(amb){amb.play().catch(function(){});}
-    if(steps){steps.play().catch(function(){});}
-    if(lobby){lobby.play().catch(function(){});}
-  }
+  soundOn=!soundOn;document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
+  if(!soundOn){if(amb)amb.pause();if(steps_)steps_.pause();if(lobby)lobby.pause();if(bard)bard.pause();}
+  else{if(amb)amb.play().catch(function(){});if(steps_)steps_.play().catch(function(){});if(lobby)lobby.play().catch(function(){});if(bard)bard.play().catch(function(){});}
+}
+function unlockAndStart(){
+  var ov=document.getElementById('press-overlay');if(ov)ov.style.display='none';
+  soundOn=true;document.getElementById('sbtn').textContent='♫ SOUND: ON';
+  lobby=new Audio(LOBBY_URL);lobby.loop=true;lobby.volume=0.5;lobby.play().catch(function(){});
 }
 
-// ── TTS with duration callback ─────────────────────────────────────────
-var curAudio=null, curDuration=0;
-async function speak(text, onDuration){
-  if(!voiceOn)return;
-  if(curAudio){curAudio.pause();curAudio=null;}
+// ── TTS ────────────────────────────────────────────────────────────────
+var curAudio=null;
+async function speak(text,onDuration){
+  if(!voiceOn)return;if(curAudio){curAudio.pause();curAudio=null;}
   try{
-    var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{
-      method:'POST',
+    var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})
-    });
-    if(!r.ok){
-      var err=await r.json();
-      console.error('TTS error:',r.status,err);
-      return;
-    }
-    var blob=await r.blob();
-    var audio=new Audio(URL.createObjectURL(blob));
-    curAudio=audio;
-    audio.addEventListener('loadedmetadata',function(){
-      curDuration=audio.duration;
-      if(onDuration) onDuration(audio.duration);
-    });
-    audio.play().catch(function(e){console.error('Audio play error:',e);});
-  }catch(e){console.error('TTS fetch error:',e);}
+      body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
+    if(!r.ok)return;
+    var audio=new Audio(URL.createObjectURL(await r.blob()));curAudio=audio;
+    audio.addEventListener('loadedmetadata',function(){if(onDuration)onDuration(audio.duration);});
+    audio.play().catch(function(){});
+  }catch(e){}
 }
-function toggleVoice(){
-  voiceOn=!voiceOn;
-  if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}
-  document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');
+function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');}
+
+// ── Character ──────────────────────────────────────────────────────────
+var charX=160,charY=0.72,charScale=1,charState='idle',charDir=1;
+var pendingCb=null,pendingScene=null,af=0;
+// Cat sidekick
+var catVisible=false,catX=120,catY=0,catHistory=[];
+function showCat(){
+  if(catVisible)return;catVisible=true;
+  catX=charX-24;catY=Math.round(charY*PH);catHistory=[];
 }
-
-// ── Character & animation ──────────────────────────────────────────────
-var charX=160, charY=0.72, charScale=1;
-var charState='idle'; // idle | walkout | walkin | walkup
-var pendingCb=null, pendingScene=null;
-var af=0;
-
 function tickChar(){
-  if(charState==='walkout'){
-    charX+=2;
-    if(charX>PW+20){
-      S.scene=pendingScene; charX=-20; charState='walkin';
-    }
-  } else if(charState==='walkin'){
-    charX+=2;
-    if(charX>=PW/2){
-      charX=PW/2; charState='idle'; stopSteps();
-      if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}
-    }
-  } else if(charState==='walkup'){
-    // Walk toward gate — move up and shrink
-    charY-=0.003;
-    charScale=Math.max(0.15, charScale-0.008);
-    if(charScale<=0.18){
-      charState='idle';
-      if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}
-    }
+  if(charState==='walkout'){charX+=2;if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}}
+  else if(charState==='walkin'){charX+=2;if(charX>=PW/2){charX=PW/2;charState='idle';stopSteps();if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}}}
+  else if(charState==='walkup'){charY-=0.003;charScale=Math.max(0.15,charScale-0.008);if(charScale<=0.18){charState='idle';if(pendingCb){var cb=pendingCb;pendingCb=null;cb();}}}
+  if(catVisible){
+    catHistory.push({x:charX,y:Math.round(charY*PH)});
+    if(catHistory.length>50)catHistory.shift();
+    var tgt=catHistory[0]||{x:charX-24,y:Math.round(charY*PH)};
+    catX+=(tgt.x-24-catX)*0.12;catY+=(tgt.y-catY)*0.12;
   }
 }
-
-function walkOut(newScene, cb){
-  pendingScene=newScene; pendingCb=cb;
-  charState='walkout'; charDir=1;
-  if(newScene==='tavern') tavernEnter();
-  else setAmbient(newScene);
+function walkOut(newScene,cb){
+  pendingScene=newScene;pendingCb=cb;charState='walkout';charDir=1;
+  if(S.scene==='tavern')stopBard();
+  if(newScene==='tavern')tavernEnter();else setAmbient(newScene);
   startSteps();
 }
-
-function walkIn(cb){
-  charX=-20; charY=0.72; charScale=1;
-  charState='walkin';
-  pendingCb=cb;
-  startSteps();
-}
-
-function walkUpToGate(cb){
-  charState='walkup';
-  charX=PW/2; charY=0.72; charScale=1;
-  pendingCb=cb;
-  startSteps();
-}
-
-var charDir=1;
+function walkUpToGate(cb){charState='walkup';charX=PW/2;charY=0.88;charScale=1;pendingCb=cb;startSteps();}
 
 // ── Canvas ─────────────────────────────────────────────────────────────
-var cv=document.getElementById('scene'), cx=cv.getContext('2d');
-cx.imageSmoothingEnabled=false;
-
-function resizeCanvas(){
-  var w=document.getElementById('scene-wrap').clientWidth||780;
-  cv.width=PW; cv.height=PH;
-  cv.style.width=w+'px';
-  cv.style.height=Math.round(w*(PH/PW))+'px';
-}
+var cv=document.getElementById('scene'),cx=cv.getContext('2d');cx.imageSmoothingEnabled=false;
+function resizeCanvas(){var w=document.getElementById('scene-wrap').clientWidth||780;cv.width=PW;cv.height=PH;cv.style.width=w+'px';cv.style.height=Math.round(w*(PH/PW))+'px';}
 
 // ── Pixel helpers ──────────────────────────────────────────────────────
 function rect(x,y,w,h,c){cx.fillStyle=c;cx.fillRect(x,y,w,h);}
 function dot(x,y,c){cx.fillStyle=c;cx.fillRect(x,y,1,1);}
 function hline(x,y,w,c){cx.fillStyle=c;cx.fillRect(x,y,w,1);}
 function vline(x,y,h,c){cx.fillStyle=c;cx.fillRect(x,y,1,h);}
-
 function stoneTile(x,y,w,h,light,dark,shadow){
-  light=light||'#9a9080';dark=dark||'#6a6058';shadow=shadow||'#4a4038';
-  rect(x,y,w,h,dark);
+  light=light||'#9a9080';dark=dark||'#6a6058';shadow=shadow||'#4a4038';rect(x,y,w,h,dark);
   var bh=6,bw=10;
-  for(var row=0;row<Math.ceil(h/bh);row++){
-    var off=(row%2)*5;
+  for(var row=0;row<Math.ceil(h/bh);row++){var off=(row%2)*5;
     for(var col=0;col<Math.ceil(w/bw)+1;col++){
-      var bx=x+col*bw-off,by=y+row*bh;
-      if(bx+bw<x||bx>x+w)continue;
-      var cx2=Math.max(bx,x),cw2=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);
-      if(ch<=0)continue;
+      var bx=x+col*bw-off,by=y+row*bh;if(bx+bw<x||bx>x+w)continue;
+      var cx2=Math.max(bx,x),cw2=Math.min(bx+bw,x+w)-cx2,ch=Math.min(bh-1,y+h-by);if(ch<=0)continue;
       rect(cx2,by,cw2,ch,light);hline(cx2,by+ch-1,cw2,shadow);vline(cx2+cw2-1,by,ch,shadow);
     }
   }
 }
-
 function cobblePath(x,y,w,h){
   rect(x,y,w,h,'#8a7850');
-  var pat=[[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[207,0,13,7],[221,1,10,6],[232,0,14,7],[247,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6],[207,8,13,7],[221,9,10,6],[232,8,14,7],[247,9,11,6]];
-  pat.forEach(function(p){var ax=x+(p[0]%(w||1)),ay=y+p[1];if(ax>x+w||ay>y+h)return;var fw=Math.min(p[2],x+w-ax),fh=Math.min(p[3],y+h-ay);rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');});
+  [[0,0,12,7],[13,1,10,6],[24,0,14,7],[39,1,11,6],[51,0,13,7],[65,1,10,6],[76,0,14,7],[91,1,11,6],[103,0,13,7],[117,1,10,6],[128,0,14,7],[143,1,11,6],[155,0,13,7],[169,1,10,6],[180,0,14,7],[195,1,11,6],[0,8,14,7],[15,9,10,6],[26,8,13,7],[40,9,11,6],[52,8,12,7],[65,9,10,6],[76,8,14,7],[91,9,11,6],[103,8,13,7],[117,9,10,6],[128,8,14,7],[143,9,11,6],[155,8,13,7],[169,9,10,6],[180,8,14,7],[195,9,11,6]].forEach(function(p){
+    var ax=x+(p[0]%(w||1)),ay=y+p[1];if(ax>x+w||ay>y+h)return;
+    var fw=Math.min(p[2],x+w-ax),fh=Math.min(p[3],y+h-ay);
+    rect(ax,ay,fw,fh,'#b0986a');hline(ax,ay,fw,'#c8ae82');vline(ax,ay,fh,'#c8ae82');hline(ax,ay+fh-1,fw,'#786040');vline(ax+fw-1,ay,fh,'#786040');
+  });
 }
-
 function pixelTree(x,y,sc){
   sc=sc||1;var s=Math.max(1,Math.round(sc)),tw=6*s,tx=x-tw/2;
   rect(tx,y,tw,24*s,'#5a3010');rect(tx+1,y,tw-2,24*s,'#7a4818');
-  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828']].forEach(function(l){var hw=Math.floor(l[2]/2);for(var row=0;row<l[3];row++){var b=Math.sin((row/l[3])*Math.PI),rw=Math.max(1,Math.round(l[2]*b));rect(l[0]-hw+Math.round((l[2]-rw)/2),l[1]+row,rw,1,l[4]);}});
+  [[x,y-10*s,18*s,14*s,'#1a3808'],[x-4*s,y-6*s,14*s,12*s,'#224a0a'],[x+2*s,y-8*s,16*s,13*s,'#1e4208'],[x-2*s,y-14*s,16*s,12*s,'#2a5a0c'],[x,y-18*s,12*s,10*s,'#347010'],[x-1*s,y-20*s,10*s,8*s,'#408018'],[x+1*s,y-22*s,8*s,7*s,'#4a9020'],[x-3*s,y-16*s,5*s,5*s,'#5aa828']].forEach(function(l){
+    var hw=Math.floor(l[2]/2);for(var row=0;row<l[3];row++){var b=Math.sin((row/l[3])*Math.PI),rw=Math.max(1,Math.round(l[2]*b));rect(l[0]-hw+Math.round((l[2]-rw)/2),l[1]+row,rw,1,l[4]);}
+  });
 }
-
-function pixelBush(x,y,c1,c2,c3){
-  c1=c1||'#2a5010';c2=c2||'#3a6818';c3=c3||'#4a8020';
-  rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);
-  rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);
-}
-
+function pixelBush(x,y,c1,c2,c3){c1=c1||'#2a5010';c2=c2||'#3a6818';c3=c3||'#4a8020';rect(x-6,y-4,12,6,c1);rect(x-4,y-6,8,4,c2);rect(x-2,y-7,5,3,c3);rect(x-7,y-3,4,4,c2);rect(x+3,y-4,4,4,c2);}
 function stoneArch(x,y,w,h){
-  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');
-  stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
-  var cy2=y+h;
-  for(var i=0;i<w-16;i++){var t=(i/(w-16))*Math.PI,ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}
+  stoneTile(x,y,8,h,'#9a9080','#7a7068','#5a5048');stoneTile(x+w-8,y,8,h,'#9a9080','#7a7068','#5a5048');
+  var cy2=y+h;for(var i=0;i<w-16;i++){var t=(i/(w-16))*Math.PI,ay=cy2-Math.round(Math.sin(t)*(h*0.7));rect(x+8+i,ay,1,cy2-ay,'#7a7068');}
 }
-
 function pixelHouse(x,y,w,h){
-  w=w||50;h=h||40;
-  // Wall
-  stoneTile(x,y+Math.round(h*0.4),w,Math.round(h*0.6));
-  // Roof — triangle shape, wide at bottom, peaked at top
+  w=w||50;h=h||40;stoneTile(x,y+Math.round(h*0.4),w,Math.round(h*0.6));
   var rh=Math.round(h*0.45);
-  for(var row=0;row<rh;row++){
-    var sh=row/rh; // 0 at top, 1 at bottom
-    var rw=Math.round(w*sh); // narrow at top, wide at bottom
-    var rx=x+Math.round((w-rw)/2);
-    rect(rx,y+row,rw,1,'rgb('+Math.round(160-sh*60)+','+Math.round(60-sh*20)+',10)');
-  }
-  // Window
-  rect(x+8,y+Math.round(h*0.5),10,8,'#1a2030');
-  hline(x+8,y+Math.round(h*0.5),10,'#a09070');
-  // Door
+  for(var row=0;row<rh;row++){var sh=row/rh,rw=Math.round(w*sh),rx=x+Math.round((w-rw)/2);rect(rx,y+row,rw,1,'rgb('+Math.round(160-sh*60)+','+Math.round(60-sh*20)+',10)');}
+  rect(x+8,y+Math.round(h*0.5),10,8,'#1a2030');hline(x+8,y+Math.round(h*0.5),10,'#a09070');
   rect(x+Math.round(w*0.4),y+Math.round(h*0.72),Math.round(w*0.2),Math.round(h*0.28),'#3a1c08');
 }
-
 function pixelWater(x,y,w,h){
   var t=Date.now()/800;
   for(var row=0;row<h;row++){var d=row/h;rect(x,y+row,w,1,'rgb('+Math.round(20+d*10)+','+Math.round(60+d*20)+','+Math.round(120+d*30)+')');}
   for(var i=0;i<5;i++){var rx=(i*65+Math.floor(t*20))%w;rect(x+rx,y+Math.round(h*0.3),20,1,'rgba(180,220,255,0.25)');rect(x+rx+8,y+Math.round(h*0.6),12,1,'rgba(180,220,255,0.2)');}
 }
-
 function pixelNPC(x,y,emoji){
   cx.save();cx.globalAlpha=0.3;cx.fillStyle='#e8d060';cx.beginPath();cx.arc(x,y,10,0,Math.PI*2);cx.fill();cx.restore();
   cx.font='14px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(emoji,x,y);
 }
-
+function drawCat(x,y){
+  x=Math.round(x);y=Math.round(y);
+  var walking=charState!=='idle';
+  var bob=walking?(Math.floor(af/8)%2?1:0):0;
+  // wagging tail — always animates
+  var tailWag=Math.floor(af/10)%3;
+  var tx=tailWag===0?-4:tailWag===1?-5:-3;
+  var ty=tailWag===0?-2:tailWag===1?-4:-1;
+  // shadow
+  cx.fillStyle='rgba(0,0,0,0.2)';cx.beginPath();cx.ellipse(x+5,y+3,5,2,0,0,Math.PI*2);cx.fill();
+  // body
+  cx.fillStyle='#c8a060';cx.fillRect(x,y-4+bob,10,6);
+  // tail (wagging)
+  cx.fillStyle='#c8a060';cx.fillRect(x+tx,y+ty+bob,5,2);cx.fillRect(x+tx-1,y+ty-3+bob,2,4);
+  // head
+  cx.fillStyle='#c8a060';cx.fillRect(x+6,y-9+bob,8,7);
+  cx.fillRect(x+6,y-12+bob,3,4);cx.fillRect(x+10,y-12+bob,3,4);
+  cx.fillStyle='#e8b8a0';cx.fillRect(x+7,y-11+bob,2,3);cx.fillRect(x+11,y-11+bob,2,3);
+  cx.fillStyle='#1a1000';cx.fillRect(x+8,y-7+bob,2,1);cx.fillRect(x+12,y-7+bob,2,1);
+  cx.fillStyle='#e07070';cx.fillRect(x+10,y-5+bob,2,1);
+  cx.fillStyle='#a07840';cx.fillRect(x+2,y-3+bob,1,5);cx.fillRect(x+5,y-3+bob,1,5);
+  // legs — animate when walking
+  cx.fillStyle='#b89050';
+  if(walking){var lo=Math.floor(af/8)%2?1:-1;cx.fillRect(x+1,y+2+lo,2,3);cx.fillRect(x+4,y+2-lo,2,3);cx.fillRect(x+7,y+2+lo,2,3);}
+  else{cx.fillRect(x+1,y+2,2,3);cx.fillRect(x+4,y+2,2,3);cx.fillRect(x+7,y+2,2,3);}
+}
 function pixelPlayer(px,py,frame,scale){
   scale=scale||1;
   var tmp=document.createElement('canvas');tmp.width=32;tmp.height=48;
@@ -410,121 +316,48 @@ function pixelPlayer(px,py,frame,scale){
   r(23,6,4,28,hair);r(26,8,3,10,hair);r(25,18,3,8,hair);r(23,26,3,8,hair);r(24,34,4,6,hair);
   d(28,10,hair);d(29,13,hair);d(28,16,hair);d(29,19,hair);d(28,22,hair);d(29,25,hair);d(28,28,hair);d(27,32,hair);
   r(7,2,18,5,hair);d(7,1,hair);d(10,0,hair);d(14,1,hair);d(18,0,hair);d(22,1,hair);d(24,1,hair);
-  r(8,4,16,12,skin);
-  r(11,8,3,2,'#1a0800');r(18,8,3,2,'#1a0800');
+  r(8,4,16,12,skin);r(11,8,3,2,'#1a0800');r(18,8,3,2,'#1a0800');
   d(12,7,'rgba(255,255,255,0.85)');d(19,7,'rgba(255,255,255,0.85)');
   d(12,12,'#6a3010');d(13,13,'#6a3010');d(14,13,'#6a3010');d(15,13,'#6a3010');
   d(16,13,'#6a3010');d(17,13,'#6a3010');d(18,13,'#6a3010');d(19,12,'#6a3010');
   d(8,10,gold);d(23,10,gold);
-  r(13,16+bob,6,3,skin);r(8,18+bob,16,8,tunic);
-  r(5,18+bob,4,9,'#801840');r(23,18+bob,4,9,'#801840');
+  r(13,16+bob,6,3,skin);r(8,18+bob,16,8,tunic);r(5,18+bob,4,9,'#801840');r(23,18+bob,4,9,'#801840');
   r(4,18+legB+bob,5,7,skin);r(23,18+legA+bob,5,7,skin);
   r(8,25+bob,16,2,gold);r(6,26+bob,20,5,tunic);
   r(9+legB,30+bob,6,7,legs);r(17+legA,30+bob,6,7,legs);
   r(8+legB,36+bob,7,4,boot);r(17+legA,36+bob,7,4,boot);
   r(26,18+bob,3,10,'#909090');r(24,18+bob,7,3,gold);
-  // Draw scaled onto main canvas
-  var dw=Math.round(32*scale), dh=Math.round(48*scale);
-  cx.drawImage(tmp, Math.round(px)-dw/2, Math.round(py)-dh, dw, dh);
+  var dw=Math.round(32*scale),dh=Math.round(48*scale);
+  cx.drawImage(tmp,Math.round(px)-dw/2,Math.round(py)-dh,dw,dh);
+}
+function drawGate(W,H){
+  var gx=W*0.28,gy=H*0.12,gw=W*0.44,gh=H*0.52,pw=Math.round(gw*0.12);
+  stoneTile(gx,gy+gh*0.1,pw,gh*0.9,'#b0a888','#8a8070','#5a5048');
+  stoneTile(gx+gw-pw,gy+gh*0.1,pw,gh*0.9,'#b0a888','#8a8070','#5a5048');
+  stoneTile(gx-2,gy+gh*0.06,pw+4,gh*0.06,'#c0b090','#a09070','#706050');
+  stoneTile(gx+gw-pw-2,gy+gh*0.06,pw+4,gh*0.06,'#c0b090','#a09070','#706050');
+  var ax=gx+pw,ay=gy,aw=gw-pw*2,ah=gh*0.55;
+  for(var i=0;i<aw;i++){var t2=(i/aw)*Math.PI,ahy=Math.round(Math.sin(t2)*ah*0.7),ay2=ay+ah-ahy;stoneTile(ax+i,ay2,1,6,'#9a9080','#7a7068','#5a5048');}
+  stoneTile(ax,ay,aw,Math.round(ah*0.25),'#9a9080','#7a7068','#5a5048');
+  cx.save();rect(gx+pw+2,gy+ah*0.22,aw-4,ah*0.28,'rgba(10,6,0,0.5)');
+  cx.fillStyle='#e8c040';cx.font=Math.max(5,Math.round(aw*0.09))+"px 'Press Start 2P',monospace";
+  cx.textAlign='center';cx.textBaseline='middle';cx.fillText('MAPLEHAVEN',gx+gw/2,gy+ah*0.36);cx.restore();
+  rect(gx+pw-3,gy+gh*0.3,4,8,'#5a3000');rect(gx+pw-4,gy+gh*0.26,6,5,'#c84010');rect(gx+pw-3,gy+gh*0.24,4,4,'#ffa020');
+  rect(gx+gw-pw-1,gy+gh*0.3,4,8,'#5a3000');rect(gx+gw-pw-2,gy+gh*0.26,6,5,'#c84010');rect(gx+gw-pw-1,gy+gh*0.24,4,4,'#ffa020');
 }
 
-// ── Town gate scene ────────────────────────────────────────────────────
-function drawGateScene(W,H){
-  // Sky — warm afternoon
-  for(var i=0;i<Math.round(H*0.55);i++){var d=i/(H*0.55);rect(0,i,W,1,'rgb('+Math.round(120+d*20)+','+Math.round(176+d*16)+','+Math.round(208+d*8)+')');}
-  // Ground
-  for(var i=0;i<Math.round(H*0.45);i++){var d=i/(H*0.45);rect(0,Math.round(H*0.55)+i,W,1,'rgb('+Math.round(30+d*25)+','+Math.round(65+d*45)+','+Math.round(15+d*12)+')');}
-  // Path leading to gate — beige cobblestone continuing through gate
-  var pathY=H*0.78;
-  cx.fillStyle='#b0986a';
-  cx.beginPath();
-  cx.moveTo(0,H); cx.lineTo(W,H);
-  cx.lineTo(W*0.58,pathY); cx.lineTo(W*0.42,pathY);
-  cx.fill();
-  // Path continues through gate opening (narrows to vanishing point)
-  cx.fillStyle='#c8ae82';
-  cx.beginPath();
-  cx.moveTo(W*0.42,pathY); cx.lineTo(W*0.58,pathY);
-  cx.lineTo(W*0.52,H*0.55); cx.lineTo(W*0.48,H*0.55);
-  cx.fill();
-  // Cobble lines
-  for(var i=0;i<5;i++){
-    var t=i/5, y2=H+(pathY-H)*t;
-    var lx=(W*0.42)*t, rx=W-(W*0.42)*t;
-    hline(Math.round(lx),Math.round(y2),Math.round(rx-lx),'#786040');
-  }
-  // Trees flanking path
-  pixelTree(W*0.12,H*0.72,1.6); pixelTree(W*0.88,H*0.70,1.5);
-  pixelTree(W*0.22,H*0.65,1.2); pixelTree(W*0.78,H*0.63,1.1);
-  pixelBush(W*0.18,H*0.75); pixelBush(W*0.82,H*0.74);
-
-  // ── Gate ──────────────────────────────────────────────────────────
-  var gx=W*0.28, gy=H*0.15, gw=W*0.44, gh=H*0.5;
-  var pillarW=Math.round(gw*0.12);
-
-  // Left pillar
-  stoneTile(gx, gy+gh*0.1, pillarW, gh*0.9, '#b0a888','#8a8070','#5a5048');
-  // Right pillar
-  stoneTile(gx+gw-pillarW, gy+gh*0.1, pillarW, gh*0.9, '#b0a888','#8a8070','#5a5048');
-  // Pillar caps
-  stoneTile(gx-2, gy+gh*0.06, pillarW+4, gh*0.06, '#c0b090','#a09070','#706050');
-  stoneTile(gx+gw-pillarW-2, gy+gh*0.06, pillarW+4, gh*0.06, '#c0b090','#a09070','#706050');
-  // Arch — just the curved stone top border, no fill
-  var archX=gx+pillarW, archY=gy, archW=gw-pillarW*2, archH=gh*0.55;
-  for(var i=0;i<archW;i++){
-    var t2=(i/archW)*Math.PI;
-    var ah=Math.round(Math.sin(t2)*archH*0.7);
-    var ay2=archY+archH-ah;
-    // Only draw the top few pixels of the arch — the border, not fill
-    stoneTile(archX+i, ay2, 1, 6, '#9a9080','#7a7068','#5a5048');
-  }
-  // Solid top bar connecting pillars
-  stoneTile(archX, archY, archW, Math.round(archH*0.25), '#9a9080','#7a7068','#5a5048');
-
-  // Gate text — "MAPLEHAVEN"
-  cx.save();
-  cx.fillStyle='rgba(10,6,0,0.7)';
-  rect(gx+pillarW+2, gy+archH*0.22, archW-4, archH*0.28, 'rgba(10,6,0,0.5)');
-  cx.fillStyle='#e8c040';
-  var fs=Math.max(5,Math.round(archW*0.09));
-  cx.font=fs+"px 'Press Start 2P',monospace";
-  cx.textAlign='center'; cx.textBaseline='middle';
-  cx.fillText('MAPLEHAVEN', gx+gw/2, gy+archH*0.36);
-  cx.restore();
-
-  // Torches on pillars
-  rect(gx+pillarW-3, gy+gh*0.3, 4, 8, '#5a3000');
-  rect(gx+pillarW-4, gy+gh*0.26, 6, 5, '#c84010');
-  rect(gx+pillarW-3, gy+gh*0.24, 4, 4, '#ffa020');
-  rect(gx+gw-pillarW-1, gy+gh*0.3, 4, 8, '#5a3000');
-  rect(gx+gw-pillarW-2, gy+gh*0.26, 6, 5, '#c84010');
-  rect(gx+gw-pillarW-1, gy+gh*0.24, 4, 4, '#ffa020');
-  // Torch glow
-  cx.save();cx.globalAlpha=0.12;
-  var g1=cx.createRadialGradient(gx+pillarW-1,gy+gh*0.27,0,gx+pillarW-1,gy+gh*0.27,18);
-  g1.addColorStop(0,'#ff8020');g1.addColorStop(1,'rgba(255,128,32,0)');
-  cx.fillStyle=g1;cx.fillRect(gx+pillarW-19,gy+gh*0.09,38,38);
-  var g2=cx.createRadialGradient(gx+gw-pillarW+1,gy+gh*0.27,0,gx+gw-pillarW+1,gy+gh*0.27,18);
-  g2.addColorStop(0,'#ff8020');g2.addColorStop(1,'rgba(255,128,32,0)');
-  cx.fillStyle=g2;cx.fillRect(gx+gw-pillarW-19,gy+gh*0.09,38,38);
-  cx.restore();
-}
-
-// ── Scenes ─────────────────────────────────────────────────────────────
-var SCENES={
-  intro:function(W,H){
-    // Dawn sky
+// ── Scenes — player drawn AFTER NPCs to prevent overlap ────────────────
+function drawScene(W,H){
+  var sc=S.scene;
+  if(sc==='intro'||sc==='gate'){
     for(var i=0;i<Math.round(H*0.5);i++){var d=i/(H*0.5);rect(0,i,W,1,'rgb('+Math.round(80+d*80)+','+Math.round(60+d*80)+','+Math.round(120+d*60)+')');}
     cx.save();var sg=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.4);sg.addColorStop(0,'rgba(255,220,120,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');cx.fillStyle=sg;cx.fillRect(0,0,W,H);cx.restore();
-    [[W*0.0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.12);rect(m[0]+i,m[1]-mh,1,mh+H*0.2,m[3]);}});
+    [[W*0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.12);rect(m[0]+i,m[1]-mh,1,mh+H*0.2,m[3]);}});
     for(var i=0;i<Math.round(H*0.52);i++){var d=i/(H*0.52);rect(0,Math.round(H*0.48)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(55+d*35)+','+Math.round(20+d*10)+')');}
-    // Trees
     pixelTree(W*0.08,H*0.66,1.9);pixelTree(W*0.88,H*0.62,1.7);
     pixelBush(W*0.18,H*0.75);pixelBush(W*0.82,H*0.74);
-    // Gate
-    drawGateScene(W,H);
-  },
-  village:function(W,H){
+    drawGate(W,H);
+  } else if(sc==='village'){
     for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(120+d*20)+','+Math.round(176+d*16)+','+Math.round(208+d*8)+')');}
     [[W*0.05,H*0.25,W*0.18,'#607888'],[W*0.2,H*0.2,W*0.22,'#708898'],[W*0.55,H*0.22,W*0.2,'#607888'],[W*0.72,H*0.18,W*0.25,'#708898']].forEach(function(m){for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.1);rect(m[0]+i,m[1]-mh,1,mh+H*0.16,m[3]);}});
     for(var i=0;i<Math.round(H*0.62);i++){var d=i/(H*0.62);rect(0,Math.round(H*0.38)+i,W,1,'rgb('+Math.round(30+d*20)+','+Math.round(60+d*40)+','+Math.round(15+d*10)+')');}
@@ -535,9 +368,9 @@ var SCENES={
     stoneArch(W*0.3,H*0.52,45,18);
     pixelBush(W*0.22,H*0.65);pixelBush(W*0.48,H*0.6);pixelBush(W*0.74,H*0.72);
     rect(W*0.08,H*0.78,10,5,'#605850');rect(W*0.82,H*0.8,8,4,'#605850');
-    pixelNPC(W*0.5,H*0.64,'🧙');pixelNPC(W*0.35,H*0.68,'👨‍🌾');
-  },
-  meadow:function(W,H){
+    // NPCs drawn before player
+    pixelNPC(W*0.5,H*0.55,'🧙');pixelNPC(W*0.35,H*0.6,'👨‍🌾');
+  } else if(sc==='meadow'){
     for(var i=0;i<Math.round(H*0.4);i++){var d=i/(H*0.4);rect(0,i,W,1,'rgb('+Math.round(128+d*16)+','+Math.round(196+d*12)+','+Math.round(232+d*8)+')');}
     [[W*0.1,18],[W*0.5,12],[W*0.75,20]].forEach(function(c){rect(c[0],c[1],22,5,'rgba(255,255,255,0.7)');rect(c[0]+4,c[1]-3,14,4,'rgba(255,255,255,0.6)');});
     for(var i=0;i<Math.round(H*0.6);i++){var d=i/(H*0.6);rect(0,Math.round(H*0.4)+i,W,1,'rgb('+Math.round(40+d*20)+','+Math.round(80+d*50)+','+Math.round(20+d*10)+')');}
@@ -545,18 +378,16 @@ var SCENES={
     pixelTree(W*0.08,H*0.72,1.8);pixelTree(W*0.82,H*0.68,1.6);pixelTree(W*0.55,H*0.62,1.4);
     [[W*0.18,H*0.6,'#e060a0'],[W*0.25,H*0.72,'#e8e040'],[W*0.65,H*0.65,'#e060a0'],[W*0.72,H*0.75,'#60b8e0'],[W*0.42,H*0.58,'#e8e040']].forEach(function(f){rect(f[0],f[1],1,4,'#40780a');rect(f[0]-2,f[1],5,4,f[2]);dot(f[0],f[1],'#ffffa0');});
     pixelBush(W*0.2,H*0.65);pixelBush(W*0.68,H*0.7);
-    pixelNPC(W*0.55,H*0.62,'🧙');pixelNPC(W*0.2,H*0.65,'🐇');
-  },
-  forest:function(W,H){
+    pixelNPC(W*0.55,H*0.55,'🧙');pixelNPC(W*0.2,H*0.58,'🐇');
+  } else if(sc==='forest'){
     for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(8+d*12)+','+Math.round(18+d*30)+','+Math.round(8+d*12)+')');}
     cx.save();['rgba(100,180,60,0.06)','rgba(120,200,70,0.04)','rgba(80,160,50,0.05)'].forEach(function(c,i){cx.fillStyle=c;cx.beginPath();var bx=W*(0.25+i*0.2);cx.moveTo(bx-5,0);cx.lineTo(bx-30,H);cx.lineTo(bx+30,H);cx.lineTo(bx+5,0);cx.fill();});cx.restore();
     cobblePath(0,H*0.55,W,H*0.45);
     [[0.04,0.7,2.2],[0.18,0.62,1.8],[0.32,0.68,1.6],[0.48,0.6,2],[0.62,0.65,1.7],[0.78,0.68,1.9],[0.92,0.72,1.8]].forEach(function(f){pixelTree(W*f[0],H*f[1],f[2]);});
     [[W*0.28,H*0.68,'#c03018'],[W*0.55,H*0.65,'#a02010'],[W*0.7,H*0.7,'#c03018']].forEach(function(m){rect(m[0]-2,m[1]-2,4,6,'#c0b888');rect(m[0]-5,m[1]-4,10,4,m[2]);rect(m[0]-3,m[1]-5,6,3,m[2]);});
     pixelBush(W*0.14,H*0.72,'#1a3808','#243e10','#2e5018');pixelBush(W*0.66,H*0.72,'#1a3808','#243e10','#2e5018');
-    pixelNPC(W*0.5,H*0.63,'🦊');
-  },
-  tavern:function(W,H){
+    pixelNPC(W*0.5,H*0.56,'🦊');
+  } else if(sc==='tavern'){
     for(var i=0;i<H;i++){var d=i/H;rect(0,i,W,1,'rgb('+Math.round(18+d*8)+','+Math.round(10+d*6)+','+Math.round(2+d*2)+')');}
     stoneTile(0,0,W,H*0.5,'#6a6050','#4a4038','#3a3028');
     for(var i=0;i<8;i++){rect(0,Math.round(H*0.5)+i*Math.round(H*0.065),W,Math.round(H*0.065),i%2===0?'#3a2408':'#2a1800');}
@@ -569,9 +400,8 @@ var SCENES={
     [[W*0.06,'#801010'],[W*0.12,'#104888'],[W*0.18,'#106040'],[W*0.24,'#886010'],[W*0.30,'#481888']].forEach(function(b){rect(b[0],H*0.15,7,18,b[1]);rect(b[0]+1,H*0.13,5,4,'#888');rect(b[0]+1,H*0.16,2,6,'rgba(255,255,255,0.2)');});
     hline(W*0.04,H*0.34,W*0.35,'#7a5020');
     rect(W*0.08,H*0.38,10,10,'#a07828');rect(W*0.2,H*0.38,10,10,'#a07828');
-    pixelNPC(W*0.25,H*0.55,'🍺');pixelNPC(W*0.55,H*0.56,'🎶');
-  },
-  river:function(W,H){
+    pixelNPC(W*0.25,H*0.48,'🍺');pixelNPC(W*0.55,H*0.49,'🎶');
+  } else if(sc==='river'){
     for(var i=0;i<Math.round(H*0.38);i++){var d=i/(H*0.38);rect(0,i,W,1,'rgb('+Math.round(96+d*16)+','+Math.round(152+d*16)+','+Math.round(192+d*8)+')');}
     for(var i=0;i<Math.round(H*0.12);i++){var d=i/(H*0.12);rect(0,Math.round(H*0.38)+i,W,1,'rgb('+Math.round(35+d*15)+','+Math.round(65+d*30)+','+Math.round(20+d*10)+')');}
     pixelWater(0,Math.round(H*0.5),W,Math.round(H*0.22));
@@ -580,79 +410,110 @@ var SCENES={
     pixelTree(W*0.06,H*0.68,1.6);pixelTree(W*0.84,H*0.65,1.7);
     pixelBush(W*0.22,H*0.5);pixelBush(W*0.7,H*0.48);
     [[W*0.18,H*0.47,'#e060a0'],[W*0.6,H*0.46,'#e8e040'],[W*0.38,H*0.48,'#60b8e0']].forEach(function(f){rect(f[0],f[1],1,4,'#408010');rect(f[0]-2,f[1],5,3,f[2]);});
-    pixelNPC(W*0.48,H*0.47,'🦆');
+    pixelNPC(W*0.48,H*0.4,'🦆');
   }
-};
+}
 
 function renderScene(){
   cx.imageSmoothingEnabled=false;
-  var draw=SCENES[S.scene]||SCENES.village;
-  draw(PW,PH);
+  drawScene(PW,PH);
   tickChar();
-  var walking=charState!=='idle';
-  var wf=walking?Math.floor(af/5)%4:0;
-  pixelPlayer(charX, Math.round(charY*PH), wf, charScale);
-  if(catVisible) drawCat(catX, catY);
-  af++;
-  requestAnimationFrame(renderScene);
+  // Draw cat BEFORE player so player is always on top
+  if(catVisible)drawCat(catX,catY);
+  var wf=charState!=='idle'?Math.floor(af/5)%4:0;
+  pixelPlayer(charX,Math.round(charY*PH),wf,charScale);
+  af++;requestAnimationFrame(renderScene);
 }
 
-// ── Cat overlay ────────────────────────────────────────────────────────
-var catVisible=false, catX=0, catY=0, catTimer=null;
-
-function showCat(){
-  catX=Math.round(PW/2)+18;
-  catY=Math.round(0.72*PH)+2;
-  catVisible=true;
-  // No timer — cat stays on screen permanently once it appears
-}
-
-function drawCat(x,y){
-  var c=cx;
-  // body
-  c.fillStyle='#c8a060';c.fillRect(x,y-4,10,7);
-  // head
-  c.fillStyle='#c8a060';c.fillRect(x+6,y-9,8,7);
-  // ears
-  c.fillStyle='#c8a060';c.fillRect(x+6,y-12,3,4);c.fillRect(x+10,y-12,3,4);
-  c.fillStyle='#e8b8a0';c.fillRect(x+7,y-11,2,3);c.fillRect(x+11,y-11,2,3);
-  // eye
-  c.fillStyle='#1a1000';c.fillRect(x+8,y-7,2,1);c.fillRect(x+12,y-7,2,1);
-  // nose
-  c.fillStyle='#e07070';c.fillRect(x+10,y-5,2,1);
-  // tail
-  c.fillStyle='#c8a060';c.fillRect(x-4,y-2,5,2);c.fillRect(x-5,y-5,2,4);
-  // stripes
-  c.fillStyle='#a07840';c.fillRect(x+2,y-3,1,5);c.fillRect(x+5,y-3,1,5);
-  // legs
-  c.fillStyle='#b89050';c.fillRect(x+1,y+2,2,3);c.fillRect(x+4,y+2,2,3);c.fillRect(x+7,y+2,2,3);
-}
+// ── Story ──────────────────────────────────────────────────────────────
+// visited{} tracks nodes already seen — returns alternate text on revisit
 var STORY={
-  start:{scene:'village',lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],event:'none',choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
-  village_market:{scene:'village',lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],event:'none',choices:[{text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},{text:"B) Browse for something else",next:'market_browse'},{text:"C) Head to the tavern instead",next:'tavern_arrive'}]},
-  buy_cake:{scene:'village',lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],event:'loot',goldChange:-3,itemGained:'honey cake',choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Visit the sage",next:'village_sage'},{text:"C) Go to the tavern",next:'tavern_arrive'}]},
-  market_browse:{scene:'village',lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],event:'loot',xpGain:5,itemGained:'lucky acorn',choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Go to the tavern",next:'tavern_arrive'},{text:"C) Head to the forest",next:'forest_arrive'}]},
-  village_sage:{scene:'village',lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],event:'loot',xpGain:10,itemGained:'healing herb',choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Head to the meadow",next:'meadow_arrive'}]},
-  tavern_arrive:{scene:'tavern',lines:["The tavern door creaks open and warm light spills out.","A bard strums a cheerful tune in the corner.","The barkeep slides a frothy mug toward you with a wink."],event:'rest',hpChange:5,choices:[{text:"A) Listen to the bard",next:'tavern_bard'},{text:"B) Ask the barkeep for news",next:'tavern_news'},{text:"C) Head back outside",next:'village_market'}]},
-  tavern_bard:{scene:'tavern',lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar — and so does your experience!"],event:'rest',xpGain:15,hpChange:3,choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Stay and have another drink",next:'tavern_rest'},{text:"C) Head to the forest",next:'forest_arrive'}]},
-  tavern_news:{scene:'tavern',lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],event:'none',xpGain:5,choices:[{text:"A) Go find the fox",next:'forest_fox'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
-  tavern_rest:{scene:'tavern',lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel completely restored."],event:'rest',hpChange:8,choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Explore the meadow",next:'meadow_arrive'}]},
-  meadow_arrive:{scene:'meadow',lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],event:'none',choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}]},
-  meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for just a moment — magical!"],event:'loot',xpGain:8,itemGained:'flower bouquet',choices:[{text:"A) Continue to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
-  meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into a patch of soft clover. The rabbit watches smugly.","But look — you've found a gold coin in the grass!"],event:'loot',xpGain:5,goldChange:3,choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go back to the village",next:'start'},{text:"C) Explore the forest",next:'forest_arrive'}]},
-  river_arrive:{scene:'river',lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],event:'none',choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}]},
-  river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It still glows faintly, as if it has never quite gone out."],event:'loot',xpGain:20,itemGained:'lantern',choices:[{text:"A) Head to the forest",next:'forest_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Rest by the river",next:'river_rest'}]},
-  river_rest:{scene:'river',lines:["You sit on a mossy rock and let the sound of the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and completely restored."],event:'rest',hpChange:7,xpGain:5,choices:[{text:"A) Cross to the forest",next:'forest_arrive'},{text:"B) Head back to the village",next:'start'},{text:"C) Go to the meadow",next:'meadow_arrive'}]},
-  forest_arrive:{scene:'forest',lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, their roots knotted like old friends.","Something rustles in the undergrowth nearby."],event:'none',choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox'}]},
-  forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart is pounding but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,choices:[{text:"A) Find the fox",next:'forest_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
-  forest_mushrooms:{scene:'forest',lines:["You find a cluster of plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful. You gather a generous handful."],event:'loot',xpGain:8,itemGained:'mushroom',choices:[{text:"A) Look for the talking fox",next:'forest_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
-  forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],event:'loot',xpGain:25,itemGained:'map fragment',choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village with this news",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
-  village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
-  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips low and golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
+  start:{scene:'village',
+    lines:["The cobblestones of Maplehaven are warm beneath your boots.","A friendly cat weaves between your legs and meows softly.","The smell of fresh bread drifts from the bakery nearby."],
+    revisit:["You're back in the familiar square of Maplehaven.","The cat trots alongside you, content as ever."],
+    event:'none',
+    choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
+  village_market:{scene:'village',
+    lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],
+    revisit:["The merchant spots you and waves. 'Back again, friend?'"],
+    event:'none',
+    choices:[{text:"A) Buy the honey cake (3 gold)",next:'buy_cake'},{text:"B) Browse for something else",next:'market_browse'},{text:"C) Head to the tavern instead",next:'tavern_arrive'}]},
+  buy_cake:{scene:'village',lines:["You hand over 3 gold and receive a warm honey cake.","It smells absolutely divine. You tuck it away carefully."],event:'loot',goldChange:-3,itemGained:'honey cake',
+    choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Visit the sage",next:'village_sage'},{text:"C) Go to the tavern",next:'tavern_arrive'}]},
+  market_browse:{scene:'village',lines:["You find a lucky acorn tucked between two crates.","The merchant shrugs. 'Keep it — might bring you fortune!'"],event:'loot',xpGain:5,itemGained:'lucky acorn',
+    choices:[{text:"A) Head to the meadow",next:'meadow_arrive'},{text:"B) Go to the tavern",next:'tavern_arrive'},{text:"C) Head to the forest",next:'forest_arrive'}]},
+  village_sage:{scene:'village',
+    lines:["The old sage peers at you with kind, twinkling eyes.","'The river holds a secret,' he whispers. 'And the forest, a friend.'","He presses a healing herb into your palm."],
+    revisit:["The sage smiles warmly. 'Still wandering, I see. Good.'","He nods toward the horizon with a knowing look."],
+    event:'loot',xpGain:10,itemGained:'healing herb',unlocks:'sage_spoken',
+    choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Head to the meadow",next:'meadow_arrive'}]},
+  tavern_arrive:{scene:'tavern',
+    lines:["The tavern door creaks open and warm light spills out.","A bard strums a cheerful tune in the corner.","The barkeep slides a frothy mug toward you with a wink."],
+    revisit:["The familiar warmth of the tavern wraps around you.","The barkeep nods. 'The usual?'"],
+    event:'rest',hpChange:5,
+    choices:[{text:"A) Listen to the bard",next:'tavern_bard'},{text:"B) Ask the barkeep for news",next:'tavern_news'},{text:"C) Head back outside",next:'village_market'}]},
+  tavern_bard:{scene:'tavern',lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar!"],event:'rest',xpGain:15,hpChange:3,unlocks:'knows_river_treasure',
+    choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Have another drink",next:'tavern_rest'},{text:"C) Head to the forest",next:'forest_arrive'}]},
+  tavern_news:{scene:'tavern',lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],event:'none',xpGain:5,unlocks:'knows_fox',
+    choices:[{text:"A) Go find the fox",next:'forest_fox'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
+  tavern_rest:{scene:'tavern',lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel restored."],event:'rest',hpChange:8,
+    choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Explore the meadow",next:'meadow_arrive'}]},
+  meadow_arrive:{scene:'meadow',
+    lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
+    revisit:["The meadow is just as lovely as you remember.","The cat pounces at a butterfly, then looks back at you proudly."],
+    event:'none',
+    choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}]},
+  meadow_flowers:{scene:'meadow',lines:["You gather a lovely bouquet of wildflowers.","A butterfly lands on your hand for a moment — magical!"],event:'loot',xpGain:8,itemGained:'flower bouquet',
+    choices:[{text:"A) Continue to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
+  meadow_rabbit:{scene:'meadow',lines:["The rabbit darts left, then right — too quick for you!","You tumble into soft clover. The rabbit watches smugly.","But look — a gold coin in the grass!"],event:'loot',xpGain:5,goldChange:3,
+    choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go back to the village",next:'start'},{text:"C) Explore the forest",next:'forest_arrive'}]},
+  river_arrive:{scene:'river',
+    lines:["The river babbles over smooth stones, cool and clear.","A duck paddles past with an air of great importance.","You spot something glinting under the old stone bridge."],
+    revisit:["The river is peaceful as ever.","The duck paddles past again — it recognises you now."],
+    event:'none',
+    choices:[{text:"A) Investigate the glint",next:'river_treasure'},{text:"B) Sit and rest by the bank",next:'river_rest'},{text:"C) Cross into the forest",next:'forest_arrive'}]},
+  river_treasure:{scene:'river',lines:["You wade in and find a beautiful old lantern under the bridge!","It glows faintly, as if it has never quite gone out."],event:'loot',xpGain:20,itemGained:'lantern',
+    choices:[{text:"A) Head to the forest",next:'forest_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Rest by the river",next:'river_rest'}]},
+  river_rest:{scene:'river',lines:["You sit on a mossy rock and let the water wash over you.","A fish leaps and lands back with a cheerful splash.","You feel peaceful and restored."],event:'rest',hpChange:7,xpGain:5,
+    choices:[{text:"A) Cross to the forest",next:'forest_arrive'},{text:"B) Head back to the village",next:'start'},{text:"C) Go to the meadow",next:'meadow_arrive'}]},
+  forest_arrive:{scene:'forest',
+    lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, roots knotted like old friends.","Something rustles in the undergrowth nearby."],
+    revisit:["The forest hushes as you enter once more.","The cat's ears prick up at every sound."],
+    event:'none',
+    choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox',requires:'knows_fox'}]},
+  forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart pounds but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,
+    choices:[{text:"A) Find the fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
+  forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],event:'loot',xpGain:8,itemGained:'mushroom',
+    choices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
+  forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
+    choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
+  village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',
+    choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
+  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,
+    choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
 };
 
-// ── UI ─────────────────────────────────────────────────────────────────
+// ── Inventory pagination ───────────────────────────────────────────────
 var EMOJIS={'honey cake':'🍯','warm scarf':'🧣','lucky acorn':'🌰','mushroom':'🍄','lantern':'🏮','flower bouquet':'💐','healing herb':'🌿','map fragment':'🗺️'};
+function invPage(dir){
+  var total=S.inv.length;
+  var maxPage=Math.max(0,Math.ceil(total/INV_PER_PAGE)-1);
+  invPage_=Math.max(0,Math.min(maxPage,invPage_+dir));
+  renderInv();
+}
+function renderInv(){
+  var sl=document.getElementById('islots');sl.innerHTML='';
+  var start=invPage_*INV_PER_PAGE;
+  for(var i=0;i<INV_PER_PAGE;i++){
+    var item=S.inv[start+i]||null;
+    var d=document.createElement('div');d.className='isl';
+    d.innerHTML=(item?(EMOJIS[item]||'📦')+'<span class="itip">'+(item||'')+'</span>':'·');
+    sl.appendChild(d);
+  }
+  var total=S.inv.length,maxPage=Math.max(0,Math.ceil(total/INV_PER_PAGE)-1);
+  document.getElementById('invprev').style.opacity=invPage_>0?'1':'0.3';
+  document.getElementById('invnext').style.opacity=invPage_<maxPage?'1':'0.3';
+}
 
 function updateStats(){
   document.getElementById('hptx').textContent=S.hp+'/'+S.maxHp;
@@ -660,9 +521,8 @@ function updateStats(){
   document.getElementById('xptx').textContent=S.xp;
   document.getElementById('bxp').style.width=Math.min(100,S.xp%100)+'%';
   document.getElementById('gtx').textContent=S.gold;
-  document.getElementById('loctx').textContent=S.scene==='intro'||S.scene==='gate'?'the road':S.scene;
-  var sl=document.getElementById('islots');sl.innerHTML='';
-  for(var i=0;i<8;i++){var d=document.createElement('div');d.className='isl';d.textContent=S.inv[i]?(EMOJIS[S.inv[i]]||'📦'):'·';if(S.inv[i])d.title=S.inv[i];sl.appendChild(d);}
+  document.getElementById('loctx').textContent=(S.scene==='intro'||S.scene==='gate')?'the road':S.scene;
+  renderInv();
 }
 
 function logLine(text,cls){
@@ -671,7 +531,6 @@ function logLine(text,cls){
   b.appendChild(d);b.scrollTop=b.scrollHeight;
   if(b.children.length>80)b.removeChild(b.children[0]);
 }
-
 var skipTypewriter=false;
 function showSkipBtn(onSkip){
   var inn=document.getElementById('cinn');
@@ -679,189 +538,134 @@ function showSkipBtn(onSkip){
   window._skipCb=onSkip;
 }
 function skipNow(){
-  skipTypewriter=true;
-  if(curAudio){curAudio.pause();curAudio=null;}
-  var btn=document.querySelector('#cinn .cb');if(btn)btn.remove();
+  skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
+  var btn=document.querySelector('#cinn .cb');if(btn&&btn.textContent==='▶▶ SKIP')btn.remove();
   if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
 function hideSkipBtn(){
   skipTypewriter=false;
-  var btn=document.querySelector('#cinn .cb[onclick="skipNow()"]');if(btn)btn.remove();
+  var btns=document.querySelectorAll('#cinn .cb');
+  btns.forEach(function(b){if(b.textContent==='▶▶ SKIP')b.remove();});
 }
-
-function typewriterLog(text,cls,onDone){
+function typewriterLog(text,cls,mpc,onDone){
   var b=document.getElementById('log'),d=document.createElement('div');
   d.className='ll'+(cls?' '+cls:'');d.textContent='';b.appendChild(d);
+  mpc=mpc||30;
   if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;if(onDone)onDone();return;}
   var i=0;
   var iv=setInterval(function(){
     if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;clearInterval(iv);if(onDone)onDone();return;}
     d.textContent+=text[i++];b.scrollTop=b.scrollHeight;
     if(i>=text.length){clearInterval(iv);if(onDone)onDone();}
-  },28);
+  },mpc);
 }
-
 function typewriterLines(lines,cls,onDone,triggers){
-  skipTypewriter=false;
-  triggers=triggers||{};
-  var i=0;
+  skipTypewriter=false;triggers=triggers||{};var i=0;
   function next(){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
-    var idx=i, line=lines[i++];
+    var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-    // Speak line and sync typewriter to narration duration
-    speak(line, function(duration){
-      // duration known — set typewriter speed to match
-      var msPerChar=Math.max(18, Math.round((duration*1000)/line.length));
-      typewriterLogTimed(line, cls, msPerChar, function(){setTimeout(next, 150);});
+    speak(line,function(dur){
+      var mpc=Math.max(18,Math.round((dur*1000)/line.length));
+      typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
     });
-    // Fallback: if voice off or duration never fires, use default speed
-    if(!voiceOn){
-      typewriterLog(line, cls, function(){setTimeout(next,120);});
-    }
+    if(!voiceOn)typewriterLog(line,cls,30,function(){setTimeout(next,120);});
   }
   showSkipBtn(function(){
-    skipTypewriter=true;
-    if(curAudio){curAudio.pause();curAudio=null;}
+    skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
     setTimeout(function(){
       var b=document.getElementById('log');
-      while(i<lines.length){
-        var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');
-        d.textContent=lines[i++];b.appendChild(d);
-      }
-      b.scrollTop=b.scrollHeight;
-      hideSkipBtn();if(onDone)onDone();
+      while(i<lines.length){var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');d.textContent=lines[i++];b.appendChild(d);}
+      b.scrollTop=b.scrollHeight;hideSkipBtn();if(onDone)onDone();
     },80);
   });
   next();
 }
-
-function typewriterLogTimed(text,cls,msPerChar,onDone){
-  var b=document.getElementById('log'),d=document.createElement('div');
-  d.className='ll'+(cls?' '+cls:'');d.textContent='';b.appendChild(d);
-  if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;if(onDone)onDone();return;}
-  var i=0;
-  var iv=setInterval(function(){
-    if(skipTypewriter){d.textContent=text;b.scrollTop=b.scrollHeight;clearInterval(iv);if(onDone)onDone();return;}
-    d.textContent+=text[i++];b.scrollTop=b.scrollHeight;
-    if(i>=text.length){clearInterval(iv);if(onDone)onDone();}
-  },msPerChar);
-}
-
 function setSt(msg){document.getElementById('cinn').innerHTML='<span id="stxt">'+msg+'</span>';}
 function renderChoices(choices){
   var inn=document.getElementById('cinn');inn.innerHTML='';
-  choices.forEach(function(c){
-    var b=document.createElement('button');b.className='cb';b.textContent=c.text;
-    b.onclick=function(){onChoice(c.next);};inn.appendChild(b);
-  });
+  choices.forEach(function(c){var b=document.createElement('button');b.className='cb';b.textContent=c.text;b.onclick=function(){onChoice(c.next);};inn.appendChild(b);});
 }
 function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disabled=true;});}
 
-// ── Story engine ───────────────────────────────────────────────────────
 function buildTriggers(lines){
   var t={};
   lines.forEach(function(line,i){
     var l=line.toLowerCase();
-    if(/\bcat\b|kitten|meow|purr/.test(l)) t[i]=function(){playCatMeow();showCat();};
-    if(/\bbird|chirp|sparrow|robin/.test(l)) t[i]=sndBird;
+    if(/\bcat\b|kitten|meow|purr/.test(l))t[i]=function(){playCatMeow();showCat();};
+    if(/\bbird|chirp|sparrow|robin/.test(l))t[i]=sndBird;
   });
   return t;
+}
+
+function addItem(item){
+  // prevent duplicates
+  if(S.inv.indexOf(item)!==-1)return;
+  S.inv.push(item);
+  // scroll to last page to show new item
+  invPage_=Math.floor((S.inv.length-1)/INV_PER_PAGE);
+  updateStats();
+  sndPickup();
 }
 
 function runNode(node){
   if(node.hpChange)S.hp=Math.min(S.maxHp,Math.max(0,S.hp+(node.hpChange||0)));
   if(node.xpGain)S.xp+=node.xpGain;
   if(node.goldChange)S.gold=Math.max(0,S.gold+(node.goldChange||0));
+  if(node.unlocks)S.flags[node.unlocks]=true;
   updateStats();
-  if(node.event==='loot')sndPickup();
+  if(node.event==='loot'&&!node.itemGained)sndPickup();
   else if((node.goldChange||0)>0)sndCoin();
   else if(node.event==='rest')sndHeal();
   else if(node.event==='encounter'&&(node.hpChange||0)<0)sndBump();
   var cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
   var triggers=buildTriggers(node.lines);
   typewriterLines(node.lines,cls,function(){
-    if(node.itemGained&&S.inv.length<8){S.inv.push(node.itemGained);updateStats();sndPickup();}
+    if(node.itemGained)addItem(node.itemGained);
     if(S.hp<=0){
-      typewriterLog('💤 You collapse gently in the grass... what a journey!','s',function(){
+      typewriterLog('💤 You collapse gently in the grass... what a journey!','s',30,function(){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
       });return;
     }
-    renderChoices(node.choices);
+    var avail=node.choices.filter(function(c){return !c.requires||S.flags[c.requires];});
+    if(avail.length<2)avail=node.choices;
+    renderChoices(avail);
   },triggers);
 }
 
 function goToNode(nodeId){
   var node=STORY[nodeId];if(!node){logLine('[The path ends here...]','s');return;}
-  // If same scene, just run node
-  if(node.scene===S.scene){
-    runNode(node);
-    return;
-  }
-  // Different scene — walk out, set new scene, walk in, then run
+  // Use revisit text if already visited and revisit lines exist
+  var isRevisit=S.visited[nodeId]&&node.revisit;
+  S.visited[nodeId]=true;
+  var displayNode=isRevisit?Object.assign({},node,{lines:node.revisit,event:'none',itemGained:null,xpGain:0,goldChange:0,hpChange:0}):node;
+  if(node.scene===S.scene){runNode(displayNode);return;}
   setSt('▸ Walking...');
-  walkOut(node.scene, function(){
-    S.scene=node.scene; updateStats();
-    runNode(node);
-  });
+  walkOut(node.scene,function(){S.scene=node.scene;updateStats();runNode(displayNode);});
 }
-
 function onChoice(nextId){disableCh();goToNode(nextId);}
 
-// ── Start sequence ─────────────────────────────────────────────────────
 function startGame(){
   stopLobby(function(){
-    S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];
-    S.scene='intro';
-    charX=PW/2; charY=0.88; charScale=1;
-    charState='idle';
-    updateStats();
-    document.getElementById('log').innerHTML='';
+    S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
+    invPage_=0;catVisible=false;catHistory=[];
+    charX=PW/2;charY=0.88;charScale=1;charState='idle';
+    updateStats();document.getElementById('log').innerHTML='';
     logLine('You approach the gates of Maplehaven...','s');
-    setAmbient('village');
-    setSt('▸ Walking...');
+    setAmbient('village');setSt('▸ Walking...');
     setTimeout(function(){
       walkUpToGate(function(){
-        stopSteps();
-        S.scene='village';
-        charX=-20; charY=0.72; charScale=1;
-        charState='walkin';
-        startSteps();
-        pendingCb=function(){
-          stopSteps();
-          runNode(STORY['start']);
-        };
+        stopSteps();S.scene='village';charX=-20;charY=0.72;charScale=1;charState='walkin';startSteps();
+        pendingCb=function(){stopSteps();goToNode('start');};
       });
     },400);
   });
 }
 
-function unlockAndStart(){
-  var overlay=document.getElementById('press-overlay');
-  if(overlay) overlay.style.display='none';
-  // Start lobby music — guaranteed user gesture
-  if(!lobby){
-    lobby=new Audio(LOBBY_URL);
-    lobby.loop=true; lobby.volume=0.5;
-  }
-  lobby.play().then(function(){
-    soundOn=true;
-    document.getElementById('sbtn').textContent='♫ SOUND: ON';
-  }).catch(function(){
-    soundOn=false;
-    document.getElementById('sbtn').textContent='♫ SOUND: OFF';
-  });
-}
-
 window.onload=function(){
   resizeCanvas();window.addEventListener('resize',resizeCanvas);
-  renderScene();updateStats();
-  logLine('Welcome, Wanderer. ✦','s');
-  // Also unlock on keypress
-  document.addEventListener('keydown',function onKey(){
-    unlockAndStart();
-    document.removeEventListener('keydown',onKey);
-  });
+  renderScene();updateStats();logLine('Welcome, Wanderer. ✦','s');
+  document.addEventListener('keydown',function onKey(){unlockAndStart();document.removeEventListener('keydown',onKey);});
   document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
 };
 </script>
