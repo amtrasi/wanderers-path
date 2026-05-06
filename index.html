@@ -79,7 +79,41 @@ const AMBIENT_URLS={
 };
 let ambientAudio=null, ambientScene=null, footstepAudio=null;
 
-function playAmbient(scene){
+const DOOR_CREAK_URL='https://amtrasi.github.io/wanderers-path/audio/460542__coosemek__door-creak.wav';
+const CAT_MEOW_URL='https://amtrasi.github.io/wanderers-path/audio/528197__fthgurdy__cat-meow-1.wav';
+
+function playDoorAndEnterTavern(){
+  // Play door creak, then fade in tavern ambience as if stepping inside
+  const door=new Audio(DOOR_CREAK_URL);
+  door.volume=0.9;
+  door.play().catch(()=>{});
+  // Start tavern audio very quietly while door creaks
+  const a=new Audio(AMBIENT_URLS.tavern);
+  a.loop=true;a.volume=0;
+  a.play().catch(()=>{});
+  // After creak (~1.2s), fade tavern up as if stepping inside
+  setTimeout(()=>fadeAudio(a,0,0.35,1200),1200);
+  // Set as current ambient
+  if(ambientAudio){const o=ambientAudio;o.pause();o.src='';}
+  ambientAudio=a;ambientScene='tavern';
+}
+
+function playCatMeow(){
+  try{
+    const ctx=ac();
+    const audio=new Audio(CAT_MEOW_URL);
+    // Use Web Audio to boost volume
+    const source=ctx.createMediaElementSource(audio);
+    const gain=ctx.createGain();
+    gain.gain.value=3.5; // amplify
+    source.connect(gain);gain.connect(ctx.destination);
+    audio.play().catch(()=>{});
+  }catch(e){
+    // fallback — just play at max volume
+    const a=new Audio(CAT_MEOW_URL);
+    a.volume=1.0;a.play().catch(()=>{});
+  }
+}
   if(ambientScene===scene) return;
   if(ambientAudio){const o=ambientAudio;fadeAudio(o,o.volume,0,1200,()=>{o.pause();o.src='';});}
   const a=new Audio(AMBIENT_URLS[scene]||AMBIENT_URLS.village);
@@ -108,7 +142,13 @@ let pendingScene=null,pendingCallback=null;
 function animateWalkOut(newScene,cb){
   pendingScene=newScene;pendingCallback=cb;
   charState='walkout';charDir=1;
-  playAmbient(newScene);startFootsteps();
+  if(newScene==='tavern'){
+    // special: door creak + realistic fade in
+    setTimeout(()=>playDoorAndEnterTavern(),300);
+  } else {
+    playAmbient(newScene);
+  }
+  startFootsteps();
 }
 function tickChar(){
   if(charState==='walkout'){charX+=2;if(charX>PW+20){S.scene=pendingScene;charX=-20;charState='walkin';}}
@@ -139,9 +179,9 @@ function sndBird(){[[0,900,1100],[0.15,1000,1300]].forEach(([d,f1,f2])=>{try{con
 function sndDoor(){try{const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,ctx.currentTime);o.frequency.linearRampToValueAtTime(180,ctx.currentTime+0.4);g.gain.setValueAtTime(0.06,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);o.start();o.stop(ctx.currentTime+0.5);}catch(e){}}
 function narrativeSounds(lines){
   const t=lines.join(' ').toLowerCase();
-  if(/\bcat\b|kitten|meow|purr/.test(t))setTimeout(sndMeow,400);
-  if(/\bbird|chirp|sparrow|robin/.test(t))setTimeout(sndBird,400);
-  if(/\bdoor|creak|gate|enter/.test(t))setTimeout(sndDoor,400);
+  if(/\bcat\b|kitten|meow|purr/.test(t)) setTimeout(playCatMeow,400);
+  if(/\bbird|chirp|sparrow|robin/.test(t)) setTimeout(sndBird,400);
+  if(/\bdoor|creak|gate/.test(t)) setTimeout(sndDoor,400);
 }
 
 // ── TTS ────────────────────────────────────────────────────────────────
@@ -222,7 +262,34 @@ function pixelPlayer(px,py,frame,dir=1){
 }
 
 const SCENES={
-  village(W,H){
+  intro(W,H){
+    // Dawn sky — soft purples and pinks
+    for(let i=0;i<Math.round(H*0.5);i++){const d=i/(H*0.5);rect(0,i,W,1,`rgb(${Math.round(80+d*80)},${Math.round(60+d*80)},${Math.round(120+d*60)})`);}
+    // Sun rising on horizon
+    cx.save();
+    const sg=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.4);
+    sg.addColorStop(0,'rgba(255,220,120,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');
+    cx.fillStyle=sg;cx.fillRect(0,0,W,H);cx.restore();
+    // distant misty hills
+    [[W*0.0,H*0.38,W*0.35,'#6a5878'],[W*0.25,H*0.34,W*0.3,'#7a6888'],[W*0.5,H*0.36,W*0.32,'#6a5878'],[W*0.75,H*0.32,W*0.28,'#7a6888']].forEach(([mx,my,mw,mc])=>{for(let i=0;i<mw;i++){const mh=Math.round(Math.sin((i/mw)*Math.PI)*H*0.12);rect(mx+i,my-mh,1,mh+H*0.2,mc);}});
+    // ground
+    for(let i=0;i<Math.round(H*0.52);i++){const d=i/(H*0.52);rect(0,Math.round(H*0.48)+i,W,1,`rgb(${Math.round(35+d*15)},${Math.round(55+d*35)},${Math.round(20+d*10)})`);}
+    // cobble path leading into distance
+    cobblePath(W*0.35,H*0.5,W*0.3,H*0.5);
+    // silhouette trees
+    pixelTree(W*0.08,H*0.66,1.9);pixelTree(W*0.88,H*0.62,1.7);pixelTree(W*0.72,H*0.68,1.4);
+    // flowers
+    [[W*0.2,H*0.62,'#e060a0'],[W*0.28,H*0.7,'#ffff60'],[W*0.58,H*0.65,'#e060a0'],[W*0.65,H*0.72,'#60c8e0']].forEach(([fx,fy,fc])=>{rect(fx,fy,1,4,'#40780a');rect(fx-2,fy,5,4,fc);});
+    // title card
+    cx.save();
+    cx.fillStyle='rgba(10,6,0,0.55)';cx.fillRect(W*0.1,H*0.14,W*0.8,H*0.22);
+    cx.strokeStyle='#c8a040';cx.lineWidth=1;cx.strokeRect(W*0.1,H*0.14,W*0.8,H*0.22);
+    cx.fillStyle='#e8c040';cx.font=`${Math.round(W*0.038)}px 'Press Start 2P', monospace`;
+    cx.textAlign='center';cx.textBaseline='middle';
+    cx.fillText('THE WANDERER',W*0.5,H*0.22);
+    cx.fillText("'S PATH",W*0.5,H*0.3);
+    cx.restore();
+  },
     for(let i=0;i<Math.round(H*0.38);i++){const d=i/(H*0.38);rect(0,i,W,1,`rgb(${Math.round(120+d*20)},${Math.round(176+d*16)},${Math.round(208+d*8)})`);}
     [[W*0.05,H*0.25,W*0.18,'#607888'],[W*0.2,H*0.2,W*0.22,'#708898'],[W*0.55,H*0.22,W*0.2,'#607888'],[W*0.72,H*0.18,W*0.25,'#708898']].forEach(([mx,my,mw,mc])=>{for(let i=0;i<mw;i++){const mh=Math.round(Math.sin((i/mw)*Math.PI)*H*0.1);rect(mx+i,my-mh,1,mh+H*0.16,mc);}});
     for(let i=0;i<Math.round(H*0.62);i++){const d=i/(H*0.62);rect(0,Math.round(H*0.38)+i,W,1,`rgb(${Math.round(30+d*20)},${Math.round(60+d*40)},${Math.round(15+d*10)})`);}
@@ -293,7 +360,7 @@ function renderScene(){
 }
 
 // ── Game state ─────────────────────────────────────────────────────────
-const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'village'};
+const S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro'};
 
 // ── Story engine ───────────────────────────────────────────────────────
 // Each node: { scene, lines, event, hpChange, xpGain, goldChange, itemGained, choices: [{text, next}] }
@@ -620,8 +687,8 @@ function goToNode(nodeId){
   // Narrative class
   const cls=node.event==='loot'?'g':node.event==='encounter'&&(node.hpChange||0)<0?'b':'';
 
-  // Speak
-  speak(node.lines.join(' '));
+  // Speak & display in sync
+  narrativeSounds(node.lines);
 
   const finish=()=>{
     typewriterLines(node.lines,cls,()=>{
@@ -633,6 +700,7 @@ function goToNode(nodeId){
       }
       renderChoices(node.choices);
     });
+    speak(node.lines.join(' '));
   };
 
   animateWalkOut(node.scene, finish);
@@ -645,13 +713,17 @@ function onChoice(nextId){
 }
 
 function startGame(){
-  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.scene='village';
+  S.hp=20;S.maxHp=20;S.xp=0;S.gold=5;S.inv=[];S.scene='intro';
   charX=160;charState='idle';
   updateStats();
   document.getElementById('log').innerHTML='';
+  document.getElementById('loctx').textContent='???';
   log('Welcome to Maplehaven, Wanderer. ✦','s');
-  playAmbient('village');
-  setTimeout(()=>goToNode('start'),400);
+  // walk into the village from the intro screen
+  setTimeout(()=>animateWalkOut('village',()=>{
+    playAmbient('village');
+    goToNode('start');
+  }),400);
 }
 
 window.onload=()=>{
