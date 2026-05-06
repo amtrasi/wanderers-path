@@ -610,7 +610,12 @@ function typewriterLines(lines,cls,onDone,triggers){
     skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
     setTimeout(function(){
       var b=document.getElementById('log');
-      while(i<lines.length){var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');d.textContent=lines[i++];b.appendChild(d);}
+      while(i<lines.length){
+        // Fire any triggers for remaining lines
+        if(triggers[i])setTimeout(triggers[i],100);
+        var d=document.createElement('div');d.className='ll'+(cls?' '+cls:'');
+        d.textContent=lines[i++];b.appendChild(d);
+      }
       b.scrollTop=b.scrollHeight;hideSkipBtn();if(onDone)onDone();
     },80);
   });
@@ -675,9 +680,9 @@ function runNode(node){
     }
     var avail=node.choices.filter(function(c){
       if(c.requires&&!S.flags[c.requires])return false;
-      // Hide choices that lead to already-completed one-time nodes
+      // Hide choices that lead to already-completed one-time nodes (any node with revisit text is one-time)
       var target=STORY[c.next];
-      if(target&&S.visited[c.next]&&target.itemGained&&!target.revisit)return false;
+      if(target&&S.visited[c.next]&&target.revisit)return false;
       return true;
     });
     if(avail.length<2)avail=node.choices.filter(function(c){return !c.requires||S.flags[c.requires];});
