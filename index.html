@@ -55,12 +55,16 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 </style>
 </head>
 <body>
+<div id="credits-screen" style="display:none;position:fixed;inset:0;background:#0a0800;align-items:center;justify-content:center;z-index:2000;cursor:pointer;">
+  <canvas id="credits-canvas"></canvas>
+</div>
 <div id="pause-overlay">
   <h2>⏸ PAUSED</h2>
   <p>You wandered away for a moment...</p>
   <button class="povbtn" onclick="resumeGame()">▸ RESUME</button>
   <button class="povbtn" style="margin-top:8px;border-color:#5a4020;color:#806020;" onclick="returnHome()">⌂ RETURN TO START</button>
 </div>
+<div id="press-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,6,0,0.96);flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:12px;">
   <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
   <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
     Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
@@ -199,15 +203,17 @@ function unlockAndStart(){
 
 // ── TTS ────────────────────────────────────────────────────────────────
 var curAudio=null;
-async function speak(text,onDuration){
-  if(!voiceOn)return;if(curAudio){curAudio.pause();curAudio=null;}
+async function speak(text){
+  if(!voiceOn)return;
+  // Cancel any in-flight audio
+  if(curAudio){curAudio.pause();curAudio=null;}
   try{
     var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
     if(!r.ok)return;
-    var audio=new Audio(URL.createObjectURL(await r.blob()));curAudio=audio;
-    audio.addEventListener('loadedmetadata',function(){if(onDuration)onDuration(audio.duration);});
+    var audio=new Audio(URL.createObjectURL(await r.blob()));
+    curAudio=audio;
     audio.play().catch(function(){});
   }catch(e){}
 }
@@ -307,28 +313,51 @@ function drawCat(x,y){
   x=Math.round(x);y=Math.round(y);
   var walking=charState!=='idle';
   var bob=walking?(Math.floor(af/8)%2?1:0):0;
-  // tail wag — slow, subtle flick every ~3 seconds
-  var tailCycle=Math.floor(af/180)%4; // 0,1,2,3 — only flicks on 3
+  var tailCycle=Math.floor(af/180)%4;
   var tailWag=tailCycle===3?1:0;
   var tx=tailWag?-5:-4;
   var ty=tailWag?-4:-2;
+  // Tortoiseshell palette
+  var dark='#1a0e08';
+  var mid='#2a1808';
+  var oran='#c85010';
+  var oran2='#e06820';
+  var paw='#d4b898';
+  var nose='#e06080';
+  var eyeC='#b8c820';
   // shadow
-  cx.fillStyle='rgba(0,0,0,0.2)';cx.beginPath();cx.ellipse(x+5,y+3,5,2,0,0,Math.PI*2);cx.fill();
-  // body
-  cx.fillStyle='#c8a060';cx.fillRect(x,y-4+bob,10,6);
-  // tail (wagging)
-  cx.fillStyle='#c8a060';cx.fillRect(x+tx,y+ty+bob,5,2);cx.fillRect(x+tx-1,y+ty-3+bob,2,4);
+  cx.fillStyle='rgba(0,0,0,0.22)';cx.beginPath();cx.ellipse(x+5,y+3,5,2,0,0,Math.PI*2);cx.fill();
+  // body — dark base
+  cx.fillStyle=dark;cx.fillRect(x,y-4+bob,10,6);
+  // orange torso patch
+  cx.fillStyle=oran;cx.fillRect(x+4,y-4+bob,4,4);
+  cx.fillStyle=oran2;cx.fillRect(x+5,y-4+bob,2,2);
+  cx.fillStyle=mid;cx.fillRect(x+1,y-3+bob,2,4);
+  // tail — dark with orange tip
+  cx.fillStyle=dark;cx.fillRect(x+tx,y+ty+bob,5,2);cx.fillRect(x+tx-1,y+ty-3+bob,2,4);
+  cx.fillStyle=oran;cx.fillRect(x+tx,y+ty-1+bob,2,2);
   // head
-  cx.fillStyle='#c8a060';cx.fillRect(x+6,y-9+bob,8,7);
-  cx.fillRect(x+6,y-12+bob,3,4);cx.fillRect(x+10,y-12+bob,3,4);
-  cx.fillStyle='#e8b8a0';cx.fillRect(x+7,y-11+bob,2,3);cx.fillRect(x+11,y-11+bob,2,3);
-  cx.fillStyle='#1a1000';cx.fillRect(x+8,y-7+bob,2,1);cx.fillRect(x+12,y-7+bob,2,1);
-  cx.fillStyle='#e07070';cx.fillRect(x+10,y-5+bob,2,1);
-  cx.fillStyle='#a07840';cx.fillRect(x+2,y-3+bob,1,5);cx.fillRect(x+5,y-3+bob,1,5);
-  // legs — animate when walking
-  cx.fillStyle='#b89050';
-  if(walking){var lo=Math.floor(af/8)%2?1:-1;cx.fillRect(x+1,y+2+lo,2,3);cx.fillRect(x+4,y+2-lo,2,3);cx.fillRect(x+7,y+2+lo,2,3);}
-  else{cx.fillRect(x+1,y+2,2,3);cx.fillRect(x+4,y+2,2,3);cx.fillRect(x+7,y+2,2,3);}
+  cx.fillStyle=dark;cx.fillRect(x+6,y-9+bob,8,7);
+  cx.fillStyle=dark;cx.fillRect(x+6,y-12+bob,3,4);cx.fillRect(x+10,y-12+bob,3,4);
+  cx.fillStyle='#c04060';cx.fillRect(x+7,y-11+bob,2,2);cx.fillRect(x+11,y-11+bob,2,2);
+  // orange face patch (split-face)
+  cx.fillStyle=oran;cx.fillRect(x+10,y-9+bob,4,5);
+  cx.fillStyle=oran2;cx.fillRect(x+11,y-8+bob,2,2);
+  // eyes — yellow-green
+  cx.fillStyle=eyeC;cx.fillRect(x+7,y-7+bob,2,2);cx.fillRect(x+11,y-7+bob,2,2);
+  cx.fillStyle='#0a0600';cx.fillRect(x+8,y-7+bob,1,2);cx.fillRect(x+12,y-7+bob,1,2);
+  cx.fillStyle='rgba(255,255,255,0.7)';cx.fillRect(x+7,y-7+bob,1,1);cx.fillRect(x+11,y-7+bob,1,1);
+  cx.fillStyle=nose;cx.fillRect(x+9,y-5+bob,2,1);
+  cx.fillStyle='rgba(255,255,255,0.4)';cx.fillRect(x+6,y-5+bob,1,1);cx.fillRect(x+13,y-5+bob,1,1);
+  // legs with pale paws
+  if(walking){
+    var lo=Math.floor(af/8)%2?1:-1;
+    cx.fillStyle=dark;cx.fillRect(x+1,y+2+lo,2,2);cx.fillRect(x+4,y+2-lo,2,2);cx.fillRect(x+7,y+2+lo,2,2);
+    cx.fillStyle=paw;cx.fillRect(x+1,y+4+lo,2,1);cx.fillRect(x+4,y+4-lo,2,1);cx.fillRect(x+7,y+4+lo,2,1);
+  } else {
+    cx.fillStyle=dark;cx.fillRect(x+1,y+2,2,2);cx.fillRect(x+4,y+2,2,2);cx.fillRect(x+7,y+2,2,2);
+    cx.fillStyle=paw;cx.fillRect(x+1,y+4,2,1);cx.fillRect(x+4,y+4,2,1);cx.fillRect(x+7,y+4,2,1);
+  }
 }
 function pixelPlayer(px,py,frame,scale){
   scale=scale||1;
@@ -537,7 +566,7 @@ var STORY={
   village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',
     choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
   epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,
-    choices:[{text:"A) Play again from the start",next:'start'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
+    choices:[{text:"A) See the end credits ✦",next:'_credits_'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
 };
 
 // ── Inventory pagination ───────────────────────────────────────────────
@@ -597,7 +626,7 @@ function skipNow(){
   if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
 function hideSkipBtn(){
-  skipTypewriter=false;
+  skipTypewriter=false;window._skipCb=null;
   var btns=document.querySelectorAll('#cinn .cb');
   btns.forEach(function(b){if(b.textContent==='▶▶ SKIP')b.remove();});
 }
@@ -619,14 +648,9 @@ function typewriterLines(lines,cls,onDone,triggers){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-    if(voiceOn){
-      speak(line,function(dur){
-        var mpc=Math.max(18,Math.round((dur*1000)/line.length));
-        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
-      });
-    } else {
-      typewriterLog(line,cls,30,function(){setTimeout(next,120);});
-    }
+    // Always type at fixed speed; voice plays in parallel if enabled
+    speak(line);
+    typewriterLog(line,cls,30,function(){setTimeout(next,150);});
   }
   showSkipBtn(function(){
     skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
@@ -713,7 +737,159 @@ function runNode(node){
   },triggers);
 }
 
+function drawPixelGoldFrame(ctx, x, y, w, h) {
+  var ps = 4; // pixel size
+  var gold1='#e8c040', gold2='#f0d060', gold3='#a07010', gold4='#c8a020', dark='#5a3a00';
+  // Fill frame background
+  ctx.fillStyle = gold3;
+  ctx.fillRect(x, y, w, h);
+  // Inner lighter gold band
+  ctx.fillStyle = gold1;
+  ctx.fillRect(x+ps*2, y+ps*2, w-ps*4, h-ps*4);
+  // Inner glow
+  ctx.fillStyle = gold2;
+  ctx.fillRect(x+ps*3, y+ps*3, w-ps*6, h-ps*6);
+  // Pixel border — top row of bricks
+  var brickW = ps*3, brickH = ps*2;
+  for(var bx=x; bx<x+w; bx+=brickW) {
+    // top edge alternating notches
+    ctx.fillStyle = (Math.floor((bx-x)/brickW)%2===0) ? dark : gold4;
+    ctx.fillRect(bx, y, Math.min(brickW, x+w-bx), brickH);
+    // bottom edge
+    ctx.fillStyle = (Math.floor((bx-x)/brickW)%2===0) ? dark : gold4;
+    ctx.fillRect(bx, y+h-brickH, Math.min(brickW, x+w-bx), brickH);
+  }
+  for(var by=y; by<y+h; by+=brickH) {
+    // left edge
+    ctx.fillStyle = (Math.floor((by-y)/brickH)%2===0) ? dark : gold4;
+    ctx.fillRect(x, by, brickW, Math.min(brickH, y+h-by));
+    // right edge
+    ctx.fillStyle = (Math.floor((by-y)/brickH)%2===0) ? dark : gold4;
+    ctx.fillRect(x+w-brickW, by, brickW, Math.min(brickH, y+h-by));
+  }
+  // Corner accent squares
+  [[x,y],[x+w-ps*4,y],[x,y+h-ps*4],[x+w-ps*4,y+h-ps*4]].forEach(function(c){
+    ctx.fillStyle=gold2; ctx.fillRect(c[0],c[1],ps*4,ps*4);
+    ctx.fillStyle=dark;  ctx.fillRect(c[0]+ps,c[1]+ps,ps*2,ps*2);
+  });
+  // Highlight top-left inner edge
+  ctx.fillStyle='rgba(255,255,200,0.35)';
+  ctx.fillRect(x+ps*3, y+ps*3, w-ps*6, ps);
+  ctx.fillRect(x+ps*3, y+ps*3, ps, h-ps*6);
+}
+
+var creditsLobby=null;
+function showCredits(){
+  // Stop all game audio
+  stopAmbient(); stopBard(); stopSteps();
+  if(lobby){lobby.pause();lobby=null;}
+  // Start lobby music
+  creditsLobby=new Audio(LOBBY_URL);creditsLobby.loop=true;creditsLobby.volume=0;
+  creditsLobby.play().catch(function(){});
+  fadeVol(creditsLobby,0,0.5,1200);
+
+  var screen=document.getElementById('credits-screen');
+  screen.style.display='flex';
+  var ccv=document.getElementById('credits-canvas');
+  var W=Math.min(window.innerWidth,600), H=Math.min(window.innerHeight,520);
+  ccv.width=W; ccv.height=H;
+  ccv.style.width=W+'px'; ccv.style.height=H+'px';
+  var ctx=ccv.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+
+  // Background gradient
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a0800'); bg.addColorStop(1,'#1a1008');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Starfield
+  ctx.fillStyle='rgba(255,220,100,0.5)';
+  for(var s=0;s<60;s++){ctx.fillRect(Math.floor(Math.random()*W),Math.floor(Math.random()*H),1,1);}
+
+  // Title text
+  ctx.fillStyle='#e8c040';
+  ctx.font="bold 11px 'Press Start 2P', monospace";
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='#e8c040'; ctx.shadowBlur=12;
+  ctx.fillText('✦ THE WANDERER\'S PATH ✦', W/2, 32);
+  ctx.shadowBlur=0;
+
+  // Image frame position
+  var imgSize=Math.round(Math.min(W,H)*0.42);
+  var frameMargin=18;
+  var frameW=imgSize+frameMargin*2, frameH=imgSize+frameMargin*2;
+  var frameX=Math.round(W/2-frameW/2), frameY=54;
+
+  // Load and draw Hazel image inside frame
+  var img=new Image();
+  img.onload=function(){
+    // Draw frame first (behind inner content)
+    drawPixelGoldFrame(ctx, frameX, frameY, frameW, frameH);
+    // Clip to inner area and draw image
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    ctx.clip();
+    ctx.drawImage(img, frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    ctx.restore();
+    // Subtle inner shadow over image edges
+    var innerGrad=ctx.createRadialGradient(W/2,frameY+frameMargin+imgSize/2,imgSize*0.3,W/2,frameY+frameMargin+imgSize/2,imgSize*0.7);
+    innerGrad.addColorStop(0,'rgba(0,0,0,0)');
+    innerGrad.addColorStop(1,'rgba(0,0,0,0.3)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    ctx.clip();
+    ctx.fillStyle=innerGrad; ctx.fillRect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    ctx.restore();
+    // Draw credits text below frame — animated typewriter
+    drawCreditsText(ctx, W, H, frameY+frameH);
+  };
+  img.onerror=function(){
+    // No image — still draw frame placeholder and proceed
+    drawPixelGoldFrame(ctx, frameX, frameY, frameW, frameH);
+    ctx.fillStyle='#2a1e08'; ctx.fillRect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    ctx.fillStyle='#e8c040'; ctx.font="14px serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🐱', W/2, frameY+frameMargin+imgSize/2);
+    drawCreditsText(ctx, W, H, frameY+frameH);
+  };
+  img.src='assets/Hazel_end-credits.png';
+
+  // Click to dismiss
+  screen.onclick=function(){
+    if(creditsLobby){fadeVol(creditsLobby,creditsLobby.volume,0,600,function(){creditsLobby.pause();creditsLobby=null;});}
+    screen.style.display='none';
+    screen.onclick=null;
+    // Return to title state
+    document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ PLAY AGAIN</button>';
+  };
+}
+
+function drawCreditsText(ctx, W, H, belowY){
+  var lines=[
+    {text:'Hazel would like to say:', size:8, color:'#a08030', delay:400},
+    {text:'Thank you for playing', size:10, color:'#e8c040', delay:900},
+    {text:'The Wanderer\'s Path!', size:10, color:'#e8c040', delay:1400},
+    {text:'♪  ♦  ♪', size:9, color:'#806020', delay:2000},
+    {text:'[ tap or click to continue ]', size:6, color:'#604810', delay:2600}
+  ];
+  var yStart=belowY+18;
+  lines.forEach(function(l,i){
+    setTimeout(function(){
+      ctx.save();
+      ctx.font=l.size+"px 'Press Start 2P', monospace";
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillStyle=l.color;
+      if(l.color==='#e8c040'){ctx.shadowColor='#e8c040';ctx.shadowBlur=8;}
+      ctx.fillText(l.text, W/2, yStart+i*22);
+      ctx.shadowBlur=0; ctx.restore();
+    }, l.delay);
+  });
+}
+
+
 function goToNode(nodeId){
+  if(nodeId==='_credits_'){showCredits();return;}
   var node=STORY[nodeId];if(!node){logLine('[The path ends here...]','s');return;}
   // Use revisit text if already visited and revisit lines exist
   var isRevisit=S.visited[nodeId]&&node.revisit;
@@ -738,14 +914,31 @@ function goToNode(nodeId){
 }
 function onChoice(nextId){disableCh();goToNode(nextId);}
 
+function resumeGame(){
+  document.getElementById('pause-overlay').classList.remove('show');
+  if(soundOn){
+    if(amb)amb.play().catch(function(){});
+    if(bard)bard.play().catch(function(){});
+    if(steps_)steps_.play().catch(function(){});
+  }
+}
+function returnHome(){
+  document.getElementById('pause-overlay').classList.remove('show');
+  stopAmbient();stopBard();stopSteps();
+  if(curAudio){curAudio.pause();curAudio=null;}
+  startGame();
+}
 function startGame(){
   stopLobby(function(){
+    skipTypewriter=false;window._skipCb=null;
+    if(curAudio){curAudio.pause();curAudio=null;}
     S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
     invPage_=0;catVisible=false;catHistory=[];catX=160;catY=Math.round(0.72*PH);
-    charX=PW/2;charY=0.88;charScale=1;charState='idle';
+    charX=PW/2;charY=0.88;charScale=1;charState='idle';pendingCb=null;
     updateStats();document.getElementById('log').innerHTML='';
     logLine('You approach the gates of Maplehaven...','s');
-    setAmbient('village');setSt('▸ Walking...');
+    setAmbient('village');
+    document.getElementById('cinn').innerHTML='<span id="stxt">▸ Walking...</span>';
     setTimeout(function(){
       walkUpToGate(function(){
         stopSteps();S.scene='village';charX=-20;charY=0.72;charScale=1;charState='walkin';startSteps();
