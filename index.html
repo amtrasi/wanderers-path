@@ -34,7 +34,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 #inv-bar{background:#1e1608;border-top:2px solid #5a4020;border-bottom:2px solid #5a4020;padding:5px 10px;display:flex;align-items:center;gap:4px;}
 .ilbl{font-size:6px;color:#7a6030;margin-right:3px;}
 .isl{background:#0e0c04;border:2px solid #5a4020;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;}
-.isl:hover{border-color:#e8c040;}
+.isl:hover{border-color:#e8c040;}.isl:hover .itip{display:block;}
 .isl .itip{display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#1a1208;border:1px solid #7a6030;color:#e8c040;font-size:6px;padding:3px 5px;white-space:nowrap;z-index:10;}
 .isl.glow{border-color:#e8c040;box-shadow:0 0 8px #e8c04088;animation:invglow 1s ease-out forwards;}
 @keyframes invglow{0%{border-color:#e8c040;box-shadow:0 0 12px #e8c040;}100%{border-color:#5a4020;box-shadow:none;}}
@@ -205,19 +205,28 @@ function unlockAndStart(){
 
 // ── TTS ────────────────────────────────────────────────────────────────
 var curAudio=null;
-async function speak(text){
-  if(!voiceOn)return;
-  // Cancel any in-flight audio
+async function speak(text,onDuration){
+  if(!voiceOn){if(onDuration)onDuration(0);return;}
   if(curAudio){curAudio.pause();curAudio=null;}
+  var myReq={}; speak._last=myReq;
   try{
     var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
-    if(!r.ok)return;
-    var audio=new Audio(URL.createObjectURL(await r.blob()));
+    if(!r.ok){console.warn('ElevenLabs',r.status);if(onDuration)onDuration(0);return;}
+    if(speak._last!==myReq){if(onDuration)onDuration(0);return;}
+    var blob=await r.blob();
+    if(speak._last!==myReq){if(onDuration)onDuration(0);return;}
+    if(curAudio){curAudio.pause();curAudio=null;}
+    var audio=new Audio(URL.createObjectURL(blob));
     curAudio=audio;
-    audio.play().catch(function(){});
-  }catch(e){}
+    audio.addEventListener('loadedmetadata',function(){
+      if(onDuration)onDuration(audio.duration);
+    });
+    // Fallback if loadedmetadata never fires
+    setTimeout(function(){if(onDuration){var cb=onDuration;onDuration=null;cb(2);}},800);
+    audio.play().catch(function(e){console.warn('audio play',e);});
+  }catch(e){console.warn('speak error',e);if(onDuration)onDuration(0);}
 }
 function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');}
 
@@ -507,7 +516,7 @@ var STORY={
     lines:["The cobblestones of Maplehaven are warm beneath your boots.","A tortoiseshell cat weaves between your legs and meows softly.","You notice a small red collar around her neck. The tag reads: Hazel.","The smell of fresh bread drifts from the bakery nearby."],
     revisit:["You're back in the familiar square of Maplehaven.","Hazel trots alongside you, content as ever."],
     event:'none',
-    choices:[{text:"A) Visit the market stalls",next:'village_market'},{text:"B) Talk to the old sage",next:'village_sage'},{text:"C) Head toward the meadow",next:'meadow_arrive'}]},
+    choices:[{text:"A) Show the sage your map fragment",next:'village_sage_end',requires:'has_map'},{text:"B) Visit the market stalls",next:'village_market'},{text:"C) Talk to the old sage",next:'village_sage'},{text:"D) Head toward the meadow",next:'meadow_arrive'}]},
   village_market:{scene:'village',
     lines:["The market is lively! A merchant waves you over with a grin.","'Fresh honey cake, only 3 gold!' he says cheerfully."],
     revisit:["The merchant spots you and waves. 'Back again, friend?'"],
@@ -530,7 +539,7 @@ var STORY={
   tavern_bard:{scene:'tavern',lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar!"],event:'rest',xpGain:15,hpChange:3,unlocks:'knows_river_treasure',
     choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Have another drink",next:'tavern_rest'},{text:"C) Head to the forest",next:'forest_arrive'}]},
   tavern_news:{scene:'tavern',lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],event:'none',xpGain:5,unlocks:'knows_fox',
-    choices:[{text:"A) Go find the fox",next:'forest_fox'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
+    choices:[{text:"A) Go find the fox now!",next:'forest_arrive'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
   tavern_rest:{scene:'tavern',lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel restored."],event:'rest',hpChange:8,
     choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Explore the meadow",next:'meadow_arrive'}]},
   meadow_arrive:{scene:'meadow',
@@ -557,14 +566,14 @@ var STORY={
     lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, roots knotted like old friends.","Something rustles in the undergrowth nearby."],
     revisit:["The forest hushes as you enter once more.","The cat's ears prick up at every sound."],
     event:'none',
-    choices:[{text:"A) Investigate the rustling",next:'forest_rustling'},{text:"B) Search for mushrooms",next:'forest_mushrooms'},{text:"C) Look for the talking fox",next:'forest_fox',requires:'knows_fox'}],
-    revisitChoices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Return to the village",next:'start'},{text:"C) Head to the meadow",next:'meadow_arrive'}]},
+    choices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Investigate the rustling",next:'forest_rustling'},{text:"C) Search for mushrooms",next:'forest_mushrooms'}],
+    revisitChoices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Return to the village",next:'start'},{text:"C) Head to the river",next:'river_arrive'}]},
   forest_rustling:{scene:'forest',lines:["A wild boar bursts out of the bushes! You leap aside just in time.","It huffs at you and trots away, clearly unimpressed.","Your heart pounds but you're unharmed — just startled!"],event:'encounter',hpChange:-3,xpGain:12,
     choices:[{text:"A) Find the fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Gather mushrooms to recover",next:'forest_mushrooms'},{text:"C) Head back to the village",next:'start'}]},
   forest_mushrooms:{scene:'forest',lines:["You find plump, glowing mushrooms at the base of an oak.","They smell earthy and wonderful."],revisit:["The mushrooms haven't grown back yet. Give them time."],event:'loot',xpGain:8,itemGained:'mushroom',
     choices:[{text:"A) Look for the talking fox",next:'forest_fox',requires:'knows_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
   forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes."],revisit:["You wait in the clearing, but the fox does not return.","Only the rustling leaves and the distant sound of birdsong remain."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
-    choices:[{text:"A) Study the map — head to river",next:'river_treasure'},{text:"B) Return to the village",next:'village_sage_end'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
+    choices:[{text:"A) Rush to the village sage!",next:'village_sage_end'},{text:"B) Study the map — head to river",next:'river_treasure'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
   village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',
     choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
   epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,
@@ -650,9 +659,15 @@ function typewriterLines(lines,cls,onDone,triggers){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-    // Always type at fixed speed; voice plays in parallel if enabled
-    speak(line);
-    typewriterLog(line,cls,30,function(){setTimeout(next,150);});
+    if(voiceOn){
+      speak(line,function(dur){
+        // Calculate typing speed so text finishes in sync with audio
+        var mpc=dur>0?Math.max(18,Math.round((dur*1000)/line.length)):30;
+        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
+      });
+    } else {
+      typewriterLog(line,cls,30,function(){setTimeout(next,120);});
+    }
   }
   showSkipBtn(function(){
     skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
@@ -672,7 +687,15 @@ function typewriterLines(lines,cls,onDone,triggers){
 function setSt(msg){document.getElementById('cinn').innerHTML='<span id="stxt">'+msg+'</span>';}
 function renderChoices(choices){
   var inn=document.getElementById('cinn');inn.innerHTML='';
-  choices.forEach(function(c){var b=document.createElement('button');b.className='cb';b.textContent=c.text;b.onclick=function(){onChoice(c.next);};inn.appendChild(b);});
+  choices.forEach(function(c){
+    var b=document.createElement('button');b.className='cb';
+    var target=STORY[c.next];
+    var isNew=c.next&&c.next!=='_credits_'&&target&&!S.visited[c.next];
+    b.textContent=isNew?'✦ '+c.text:c.text;
+    if(isNew){b.style.borderColor='#e8c04066';b.style.color='#e8c040';}
+    b.onclick=function(){onChoice(c.next);};
+    inn.appendChild(b);
+  });
 }
 function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disabled=true;});}
 
@@ -726,15 +749,30 @@ function runNode(node){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
       });return;
     }
-    var avail=node.choices.filter(function(c){
-      if(c.requires&&!S.flags[c.requires])return false;
-      // Hide choices that lead to already-completed one-time nodes (any node with revisit text is one-time)
-      var target=STORY[c.next];
-      if(target&&S.visited[c.next]&&target.revisit)return false;
-      return true;
+    // Split choices into new (unvisited) and revisit
+    var allAllowed=node.choices.filter(function(c){
+      return !c.requires||S.flags[c.requires];
     });
-    if(avail.length<2)avail=node.choices.filter(function(c){return !c.requires||S.flags[c.requires];});
-    if(avail.length<1)avail=node.choices;
+    var freshChoices=allAllowed.filter(function(c){
+      var target=STORY[c.next];
+      return !target||!S.visited[c.next];
+    });
+    var seenChoices=allAllowed.filter(function(c){
+      var target=STORY[c.next];
+      return target&&S.visited[c.next];
+    });
+    var avail;
+    if(freshChoices.length>=2){
+      // Plenty of new things — show only fresh options (no clutter)
+      avail=freshChoices;
+    } else if(freshChoices.length===1){
+      // One new path — show it plus one revisit option so player isn't railroaded
+      avail=freshChoices.concat(seenChoices.slice(0,1));
+    } else {
+      // Everything visited — show up to 2 revisit options, prefer ones closer to end
+      avail=seenChoices.slice(0,2);
+    }
+    if(avail.length<1)avail=allAllowed;
     renderChoices(avail);
   },triggers);
 }
@@ -928,7 +966,24 @@ function returnHome(){
   document.getElementById('pause-overlay').classList.remove('show');
   stopAmbient();stopBard();stopSteps();
   if(curAudio){curAudio.pause();curAudio=null;}
-  startGame();
+  showLobby();
+}
+function showLobby(){
+  S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
+  invPage_=0;catVisible=false;catHistory=[];
+  charX=PW/2;charY=0.88;charScale=1;charState='idle';pendingCb=null;
+  skipTypewriter=false;window._skipCb=null;
+  updateStats();
+  document.getElementById('log').innerHTML='';
+  logLine('Welcome, Wanderer. ✦','s');
+  document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ BEGIN YOUR ADVENTURE</button>';
+  // Start lobby music
+  if(lobby){lobby.pause();lobby=null;}
+  soundOn=true;
+  document.getElementById('sbtn').textContent='♫ SOUND: ON';
+  lobby=new Audio(LOBBY_URL);lobby.loop=true;lobby.volume=0;
+  lobby.play().catch(function(){});
+  fadeVol(lobby,0,0.5,1200);
 }
 function startGame(){
   stopLobby(function(){
