@@ -120,10 +120,16 @@ var amb=null,ambScene=null;
 function setAmbient(scene){
   if(ambScene===scene)return;
   var url=AMBIENT[scene];if(!url)return;
-  if(amb){var o=amb;o.pause();o.src='';amb=null;}
-  ambScene=scene;if(!soundOn)return;
-  var a=new Audio(url);a.loop=true;a.volume=0;a.play().catch(function(){});
-  fadeVol(a,0,AVOL[scene]||0.35,1200);amb=a;
+  var old=amb,oldScene=ambScene;
+  ambScene=scene;
+  if(!soundOn){if(old){old.pause();old.src='';}amb=null;return;}
+  // Fade out old
+  if(old)fadeVol(old,old.volume,0,1800,function(){old.pause();old.src='';});
+  // Fade in new — slight delay so crossfade overlaps
+  var a=new Audio(url);a.loop=true;a.volume=0;
+  a.play().catch(function(){});
+  setTimeout(function(){fadeVol(a,0,AVOL[scene]||0.35,1800);},400);
+  amb=a;
 }
 function stopAmbient(){if(amb){amb.pause();amb.src='';amb=null;ambScene=null;}}
 var lobby=null;
@@ -434,18 +440,18 @@ function renderScene(){
   // NPCs per scene (drawn with painter's algorithm)
   var sc=S.scene;
   if(sc==='village'){
-    drawables.push({y:Math.round(PH*0.55),fn:function(){pixelNPC(PW*0.5,PH*0.55,'🧙');}});
-    drawables.push({y:Math.round(PH*0.6),fn:function(){pixelNPC(PW*0.35,PH*0.6,'👨‍🌾');}});
+    drawables.push({y:Math.round(PH*0.52),fn:function(){pixelNPC(PW*0.5,PH*0.52,'🧙');}});
+    drawables.push({y:Math.round(PH*0.56),fn:function(){pixelNPC(PW*0.35,PH*0.56,'👨‍🌾');}});
   } else if(sc==='meadow'){
-    drawables.push({y:Math.round(PH*0.55),fn:function(){pixelNPC(PW*0.55,PH*0.55,'🧙');}});
-    drawables.push({y:Math.round(PH*0.58),fn:function(){pixelNPC(PW*0.2,PH*0.58,'🐇');}});
+    drawables.push({y:Math.round(PH*0.50),fn:function(){pixelNPC(PW*0.55,PH*0.50,'🧙');}});
+    drawables.push({y:Math.round(PH*0.52),fn:function(){pixelNPC(PW*0.2,PH*0.52,'🐇');}});
   } else if(sc==='forest'){
-    drawables.push({y:Math.round(PH*0.56),fn:function(){pixelNPC(PW*0.5,PH*0.56,'🦊');}});
+    drawables.push({y:Math.round(PH*0.48),fn:function(){pixelNPC(PW*0.5,PH*0.48,'🦊');}});
   } else if(sc==='tavern'){
-    drawables.push({y:Math.round(PH*0.48),fn:function(){pixelNPC(PW*0.25,PH*0.48,'🍺');}});
-    drawables.push({y:Math.round(PH*0.49),fn:function(){pixelNPC(PW*0.55,PH*0.49,'🎶');}});
+    drawables.push({y:Math.round(PH*0.44),fn:function(){pixelNPC(PW*0.25,PH*0.44,'🍺');}});
+    drawables.push({y:Math.round(PH*0.45),fn:function(){pixelNPC(PW*0.55,PH*0.45,'🎶');}});
   } else if(sc==='river'){
-    drawables.push({y:Math.round(PH*0.4),fn:function(){pixelNPC(PW*0.48,PH*0.4,'🦆');}});
+    drawables.push({y:Math.round(PH*0.38),fn:function(){pixelNPC(PW*0.48,PH*0.38,'🦆');}});
   }
   // Sort by Y and draw
   drawables.sort(function(a,b){return a.y-b.y;});
