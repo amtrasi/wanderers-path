@@ -208,23 +208,22 @@ var curAudio=null;
 async function speak(text,onDuration){
   if(!voiceOn){if(onDuration)onDuration(0);return;}
   if(curAudio){curAudio.pause();curAudio=null;}
-  var myReq={}; speak._last=myReq;
   try{
     var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
     if(!r.ok){console.warn('ElevenLabs',r.status);if(onDuration)onDuration(0);return;}
-    if(speak._last!==myReq){if(onDuration)onDuration(0);return;}
     var blob=await r.blob();
-    if(speak._last!==myReq){if(onDuration)onDuration(0);return;}
     if(curAudio){curAudio.pause();curAudio=null;}
     var audio=new Audio(URL.createObjectURL(blob));
     curAudio=audio;
+    var durFired=false;
     audio.addEventListener('loadedmetadata',function(){
-      if(onDuration)onDuration(audio.duration);
+      if(!durFired){durFired=true;if(onDuration)onDuration(audio.duration);}
     });
-    // Fallback if loadedmetadata never fires
-    setTimeout(function(){if(onDuration){var cb=onDuration;onDuration=null;cb(2);}},800);
+    setTimeout(function(){
+      if(!durFired){durFired=true;if(onDuration)onDuration(2);}
+    },800);
     audio.play().catch(function(e){console.warn('audio play',e);});
   }catch(e){console.warn('speak error',e);if(onDuration)onDuration(0);}
 }
