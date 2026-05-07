@@ -41,7 +41,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
 .ipag{background:none;border:1px solid #5a4020;color:#a08030;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;cursor:pointer;line-height:1;}
 .ipag:hover{border-color:#e8c040;color:#e8c040;}
 #gld{margin-left:auto;font-size:8px;color:#e8c040;}
-#log{background:#120e04;border-bottom:2px solid #5a4020;padding:10px 14px;min-height:180px;max-height:260px;overflow-y:auto;}
+#log{background:#120e04;border-bottom:2px solid #5a4020;padding:10px 14px;height:220px;overflow-y:auto;}
 #log::-webkit-scrollbar{width:3px;}
 #log::-webkit-scrollbar-thumb{background:#5a4020;}
 .ll{font-size:8px;line-height:1.9;color:#c8a840;margin-bottom:1px;}
@@ -65,7 +65,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
   <button class="povbtn" style="margin-top:8px;border-color:#5a4020;color:#806020;" onclick="returnHome()">⌂ RETURN TO START</button>
 </div>
 <div id="press-overlay" style="display:flex;position:fixed;inset:0;background:rgba(10,6,0,0.96);flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:12px;" onclick="unlockAndStart()">
-  <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO BEGIN</p>
+  <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
   <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
     Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
   </div>
@@ -151,7 +151,7 @@ function stopLobby(cb){
 var bard=null;
 function startBard(){
   if(bard||!soundOn)return;
-  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.08,1500);
+  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.12,1500);
 }
 function stopBard(){if(!bard)return;var b=bard;bard=null;fadeVol(b,b.volume,0,1000,function(){b.pause();b.src='';});}
 function tavernEnter(){
@@ -508,11 +508,11 @@ var STORY={
     event:'rest',hpChange:5,
     choices:[{text:"A) Ask the barkeep for news",next:'tavern_news'},{text:"B) Listen to the bard",next:'tavern_bard'},{text:"C) Head back outside",next:'village_market'}]},
   tavern_bard:{scene:'tavern',lines:["The bard sings of a hidden treasure near the old river bridge.","You feel inspired and refreshed by the music.","Your spirits soar!"],event:'rest',xpGain:15,hpChange:3,unlocks:'knows_river_treasure',
-    choices:[{text:"A) Go to the river",next:'river_arrive'},{text:"B) Have another drink",next:'tavern_rest'},{text:"C) Head to the forest",next:'forest_arrive'}]},
+    choices:[{text:"A) Ask the barkeep for news",next:'tavern_news'},{text:"B) Go to the river",next:'river_arrive'},{text:"C) Head to the forest",next:'forest_arrive'}]},
   tavern_news:{scene:'tavern',lines:["'A strange fox has been spotted in the forest,' the barkeep murmurs.","'Folks say it speaks in riddles and grants wishes.'","You feel a flutter of curiosity in your chest."],event:'none',xpGain:5,unlocks:'knows_fox',
     choices:[{text:"A) Go find the fox now!",next:'forest_arrive'},{text:"B) Head to the meadow first",next:'meadow_arrive'},{text:"C) Visit the river",next:'river_arrive'}]},
   tavern_rest:{scene:'tavern',lines:["You settle into a cozy chair by the fire.","The warmth seeps into your bones. You feel restored."],event:'rest',hpChange:8,
-    choices:[{text:"A) Head to the river",next:'river_arrive'},{text:"B) Go to the forest",next:'forest_arrive'},{text:"C) Explore the meadow",next:'meadow_arrive'}]},
+    choices:[{text:"A) Ask the barkeep for news",next:'tavern_news'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Go to the forest",next:'forest_arrive'}]},
   meadow_arrive:{scene:'meadow',
     lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
     revisit:["The meadow is just as lovely as you remember.","The cat pounces at a butterfly, then looks back at you proudly."],
@@ -650,18 +650,35 @@ function typewriterLines(lines,cls,onDone,triggers){
   next();
 }
 function setSt(msg){document.getElementById('cinn').innerHTML='<span id="stxt">'+msg+'</span>';}
+var _currentChoices=[];
 function renderChoices(choices){
+  _currentChoices=choices;
   var inn=document.getElementById('cinn');inn.innerHTML='';
-  choices.forEach(function(c){
+  var letters='ABCDEFGHIJ';
+  choices.forEach(function(c,i){
     var b=document.createElement('button');b.className='cb';
     var target=STORY[c.next];
     var isNew=c.next&&c.next!=='_credits_'&&target&&!S.visited[c.next];
-    b.textContent=isNew?'✦ '+c.text:c.text;
+    // Strip any existing letter prefix from the text, then add correct one
+    var rawText=c.text.replace(/^[A-J][)\.]\s*/,'');
+    var label=letters[i]+') '+rawText;
+    b.textContent=isNew?'✦ '+label:label;
     if(isNew){b.style.borderColor='#e8c04066';b.style.color='#e8c040';}
     b.onclick=function(){onChoice(c.next);};
     inn.appendChild(b);
   });
 }
+// Keyboard navigation — press A/B/C etc to select choice
+document.addEventListener('keydown',function(e){
+  if(!_currentChoices.length)return;
+  var letters='ABCDEFGHIJ';
+  var key=e.key.toUpperCase();
+  var idx=letters.indexOf(key);
+  if(idx>=0&&idx<_currentChoices.length){
+    var btns=document.querySelectorAll('#cinn .cb:not([disabled])');
+    if(btns[idx]){btns[idx].click();}
+  }
+});
 function disableCh(){document.querySelectorAll('.cb').forEach(function(b){b.disabled=true;});}
 
 function buildTriggers(lines){
@@ -720,29 +737,14 @@ function runNode(node){
       setTimeout(function(){showCredits();},2200);
       return;
     }
-    // Split choices into new (unvisited) and revisit
+    // Show all allowed choices except the one we just came from (already done)
     var allAllowed=node.choices.filter(function(c){
       return !c.requires||S.flags[c.requires];
     });
-    var freshChoices=allAllowed.filter(function(c){
-      var target=STORY[c.next];
-      return !target||!S.visited[c.next];
+    // Remove only the node we just visited (the current node itself)
+    var avail=allAllowed.filter(function(c){
+      return c.next!==_currentNodeId;
     });
-    var seenChoices=allAllowed.filter(function(c){
-      var target=STORY[c.next];
-      return target&&S.visited[c.next];
-    });
-    var avail;
-    if(freshChoices.length>=2){
-      // Plenty of new things — show only fresh options (no clutter)
-      avail=freshChoices;
-    } else if(freshChoices.length===1){
-      // One new path — show it plus one revisit option so player isn't railroaded
-      avail=freshChoices.concat(seenChoices.slice(0,1));
-    } else {
-      // Everything visited — show up to 2 revisit options, prefer ones closer to end
-      avail=seenChoices.slice(0,2);
-    }
     if(avail.length<1)avail=allAllowed;
     renderChoices(avail);
   },triggers);
@@ -796,7 +798,7 @@ var ATTRIBUTIONS=[
   {title:'✦ THE WANDERER\'S PATH ✦',role:'',author:'',license:'',isBig:true},
   {title:'A game by amtrasi',role:'',author:'',license:'',isDim:true},
   {title:'',spacer:true},
-  {title:'— SOUND & MUSIC —',isHeader:true,sub:'Courtesy of freesound.org'},
+  {title:'— SOUND & MUSIC —',role:'',author:'',license:'',isHeader:true},
   {title:'',spacer:true},
   {title:'Village Market Ambience',author:'Dan_AudioFile',license:'CC BY 4.0'},
   {title:'Babbling Brook Loop',author:'minian89',license:'CC0'},
@@ -807,7 +809,10 @@ var ATTRIBUTIONS=[
   {title:'FPS Footsteps Loop',author:'qubodup',license:'CC0'},
   {title:'Medieval/Fantasy RPG Loop',author:'sonically_sound',license:'CC BY-NC 4.0'},
   {title:'Lute and Wood Flute',author:'soundsandrebounds',license:'CC0'},
-  {title:'Hazel\'s Meow',author:'Hazel Trasi',license:'her mother made this game'},
+  {title:'',spacer:true},
+  {title:'— VOICE NARRATION —',role:'',author:'',license:'',isHeader:true},
+  {title:'',spacer:true},
+  {title:'Powered by ElevenLabs',author:'',license:'',isDim:true},
   {title:'',spacer:true},
   {title:'— TYPOGRAPHY —',role:'',author:'',license:'',isHeader:true},
   {title:'',spacer:true},
@@ -856,7 +861,7 @@ function runScrollingCredits(onDone){
   ATTRIBUTIONS.forEach(function(a){
     if(a.spacer){entries.push({type:'spacer',h:sectionGap});return;}
     if(a.isBig){entries.push({type:'big',text:a.title,h:32});return;}
-    if(a.isHeader){entries.push({type:'header',text:a.title,sub:a.sub||null,h:a.sub?lineHeight+22:lineHeight+6});return;}
+    if(a.isHeader){entries.push({type:'header',text:a.title,h:lineHeight+6});return;}
     if(a.isDim){entries.push({type:'dim',text:a.title,h:lineHeight});return;}
     entries.push({type:'attr',title:a.title,author:a.author,license:a.license,h:lineHeight*2+4});
   });
@@ -903,11 +908,6 @@ function runScrollingCredits(onDone){
           ctx.font="8px 'Press Start 2P',monospace";
           ctx.fillStyle='#c8a040';
           ctx.fillText(e.text,W/2,y+3);
-          if(e.sub){
-          ctx.font="6px 'Press Start 2P',monospace";
-          ctx.fillStyle='#706040';
-          ctx.fillText(e.sub,W/2,y+20);
-          }
           // underline
           ctx.fillStyle='#5a4020';
           ctx.fillRect(W*0.2,y+e.h-2,W*0.6,1);
@@ -1038,9 +1038,11 @@ function drawHazelText(ctx,W,H,belowY,onDone){
 }
 
 
+var _currentNodeId=null;
 function goToNode(nodeId){
   if(nodeId==='_credits_'){showCredits();return;}
   var node=STORY[nodeId];if(!node){logLine('[The path ends here...]','s');return;}
+  _currentNodeId=nodeId;
   // Use revisit text if already visited and revisit lines exist
   var isRevisit=S.visited[nodeId]&&node.revisit;
   // For loot nodes with no revisit text, block re-collecting by skipping loot effects
