@@ -146,7 +146,11 @@ function stopAmbient(){if(amb){amb.pause();amb.src='';amb=null;ambScene=null;}}
 var lobby=null;
 function stopLobby(cb){
   if(!lobby){if(cb)cb();return;}
-  var l=lobby;lobby=null;fadeVol(l,l.volume,0,800,function(){l.pause();l.src='';if(cb)cb();});
+  var l=lobby;lobby=null;
+  fadeVol(l,l.volume,0,800,function(){
+    if(l){try{l.pause();l.src='';}catch(e){}}
+    if(cb)cb();
+  });
 }
 var bard=null;
 function startBard(){
@@ -581,6 +585,47 @@ function drawScene(W,H){
     // Foreground darkening — depth vignette
     var vg=cx.createLinearGradient(0,H*0.78,0,H);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,10,0,0.55)');cx.fillStyle=vg;cx.fillRect(0,H*0.78,W,H*0.22);
   } else if(sc==='meadow'){
+    var isEpilogue=S.visited&&S.visited['epilogue'];
+    if(isEpilogue){
+      // ── Sunset sky — golden hour, the sun dipping low ──
+      var sunsetBands=['#0a0428','#1a0848','#3a1060','#602080','#9a3860','#c85030','#e07020','#f0a020','#f8c040'];
+      var sbh=Math.ceil(Math.round(H*0.42)/sunsetBands.length);
+      sunsetBands.forEach(function(c,i){rect(0,i*sbh,W,sbh,c);});
+      // Sun disk sitting low on horizon
+      var sunX=Math.round(W*0.62),sunY=Math.round(H*0.38);
+      rect(sunX-8,sunY-4,16,8,'#f8d040');   // sun body
+      rect(sunX-6,sunY-6,12,2,'#fae060');   // top cap
+      rect(sunX-6,sunY+4,12,2,'#f0b820');   // bottom cap
+      hline(sunX-8,sunY-1,16,'#ffffff');     // bright center line
+      // Sun glow radial
+      cx.save();var sunG=cx.createRadialGradient(sunX,sunY,0,sunX,sunY,W*0.5);
+      sunG.addColorStop(0,'rgba(255,200,40,0.6)');sunG.addColorStop(0.2,'rgba(255,120,20,0.3)');sunG.addColorStop(1,'rgba(180,40,0,0)');
+      cx.fillStyle=sunG;cx.fillRect(0,0,W,H);cx.restore();
+      // Silhouette clouds — dark against sunset
+      [[W*0.08,H*0.12,28,8],[W*0.45,H*0.08,36,10],[W*0.78,H*0.14,22,7]].forEach(function(c){
+        cx.fillStyle='rgba(60,10,40,0.7)';cx.beginPath();cx.ellipse(c[0],c[1],c[2],c[3],0,0,Math.PI*2);cx.fill();
+        cx.fillStyle='rgba(240,120,20,0.3)';cx.beginPath();cx.ellipse(c[0],c[1]-c[3]*0.3,c[2]*0.8,c[3]*0.4,0,0,Math.PI*2);cx.fill();
+      });
+      // Pixel silhouette hills on horizon — dark purple
+      [[W*0,H*0.42,W*0.5,'#1a0838'],[W*0.35,H*0.38,W*0.4,'#220a48'],[W*0.65,H*0.40,W*0.38,'#180830']].forEach(function(m){
+        for(var i=0;i<m[2];i++){var mh=Math.round(Math.sin((i/m[2])*Math.PI)*H*0.10);rect(m[0]+i,m[1]-mh,1,mh+H*0.15,m[3]);}
+      });
+      // Ground — dark warm dusk greens, silhouette-like
+      pixelGround(0,Math.round(H*0.4),W,Math.round(H*0.6),'#0a1e06','#122a08','#1a3a0c');
+      pixelGround(0,Math.round(H*0.7),W,Math.round(H*0.3),'#060e04','#0c1806','#122008');
+      cobblePath(W*0.3,H*0.5,W*0.4,H*0.5);
+      // Silhouette trees — very dark against the glowing sky
+      pixelTree(W*0.08,H*0.72,1.8);pixelTree(W*0.82,H*0.68,1.6);pixelTree(W*0.55,H*0.62,1.4);
+      // Silhouette bushes
+      pixelBush(W*0.2,H*0.65,'#060e04','#0a1606','#102008');pixelBush(W*0.68,H*0.7,'#060e04','#0a1606','#102008');
+      // Warm sunset flowers — glowing amber/orange
+      [[W*0.15,H*0.58,'#ff8020'],[W*0.25,H*0.70,'#ffb020'],[W*0.62,H*0.63,'#ff6010'],[W*0.72,H*0.73,'#ffd020'],[W*0.40,H*0.56,'#ff9030']].forEach(function(f){
+        rect(f[0],f[1],1,5,'#102008');rect(f[0]-2,f[1],5,4,f[2]);dot(f[0],f[1]-1,'#ffe080');
+      });
+      grassTufts(0,Math.round(H*0.58),W,28);grassTufts(0,Math.round(H*0.70),W,24);
+      // Dark foreground vignette
+      cx.save();var dg=cx.createLinearGradient(0,H*0.78,0,H);dg.addColorStop(0,'rgba(0,0,0,0)');dg.addColorStop(1,'rgba(2,0,4,0.85)');cx.fillStyle=dg;cx.fillRect(0,H*0.78,W,H*0.22);cx.restore();
+    } else {
     // Pixel banded meadow sky
     var skyH2=Math.round(H*0.4);
     ['#2858b8','#2858b8','#3870c8','#4888d8','#5898e0','#68a8e8','#78b8f0','#88c8f8'].forEach(function(c,i){rect(0,i*Math.ceil(skyH2/8),W,Math.ceil(skyH2/8),c);});
@@ -606,6 +651,7 @@ function drawScene(W,H){
     });
     // Dark foreground grass strip with depth
     var mg=cx.createLinearGradient(0,H*0.82,0,H);mg.addColorStop(0,'rgba(0,0,0,0)');mg.addColorStop(1,'rgba(0,8,0,0.6)');cx.fillStyle=mg;cx.fillRect(0,H*0.82,W,H*0.18);
+    }
   } else if(sc==='forest'){
     // Deep atmospheric forest — dark teal canopy light shafts
     // Dark forest floor — chunky pixel tiles
@@ -1246,7 +1292,7 @@ var ATTRIBUTIONS=[
   {title:'✦ THE WANDERER\'S PATH ✦',role:'',author:'',license:'',isBig:true},
   {title:'A game by amtrasi',role:'',author:'',license:'',isDim:true},
   {title:'',spacer:true},
-  {title:'— SOUND & MUSIC —',role:'',author:'',license:'',isHeader:true},
+  {title:'— SOUND & MUSIC —',isHeader:true,sub:'Courtesy of freesound.org'},
   {title:'',spacer:true},
   {title:'Village Market Ambience',author:'Dan_AudioFile',license:'CC BY 4.0'},
   {title:'Babbling Brook Loop',author:'minian89',license:'CC0'},
@@ -1257,10 +1303,7 @@ var ATTRIBUTIONS=[
   {title:'FPS Footsteps Loop',author:'qubodup',license:'CC0'},
   {title:'Medieval/Fantasy RPG Loop',author:'sonically_sound',license:'CC BY-NC 4.0'},
   {title:'Lute and Wood Flute',author:'soundsandrebounds',license:'CC0'},
-  {title:'',spacer:true},
-  {title:'— VOICE NARRATION —',role:'',author:'',license:'',isHeader:true},
-  {title:'',spacer:true},
-  {title:'Powered by ElevenLabs',author:'',license:'',isDim:true},
+  {title:'Hazel\'s Meow',author:'Hazel Trasi',license:'her mother made this game'},
   {title:'',spacer:true},
   {title:'— TYPOGRAPHY —',role:'',author:'',license:'',isHeader:true},
   {title:'',spacer:true},
@@ -1287,7 +1330,7 @@ function showCredits(){
     runScrollingCredits(function(){
       // Done — go to lobby
       var screen=document.getElementById('credits-screen');
-      if(creditsLobby){fadeVol(creditsLobby,creditsLobby.volume,0,800,function(){creditsLobby.pause();creditsLobby=null;});}
+      if(creditsLobby){var cl=creditsLobby;creditsLobby=null;fadeVol(cl,cl.volume,0,800,function(){try{cl.pause();cl.src='';}catch(e){}});}
       screen.style.display='none';
       screen.onclick=null;
       showLobby();
@@ -1309,7 +1352,7 @@ function runScrollingCredits(onDone){
   ATTRIBUTIONS.forEach(function(a){
     if(a.spacer){entries.push({type:'spacer',h:sectionGap});return;}
     if(a.isBig){entries.push({type:'big',text:a.title,h:32});return;}
-    if(a.isHeader){entries.push({type:'header',text:a.title,h:lineHeight+6});return;}
+    if(a.isHeader){entries.push({type:'header',text:a.title,sub:a.sub||null,h:a.sub?lineHeight+22:lineHeight+6});return;}
     if(a.isDim){entries.push({type:'dim',text:a.title,h:lineHeight});return;}
     entries.push({type:'attr',title:a.title,author:a.author,license:a.license,h:lineHeight*2+4});
   });
@@ -1356,6 +1399,11 @@ function runScrollingCredits(onDone){
           ctx.font="8px 'Press Start 2P',monospace";
           ctx.fillStyle='#c8a040';
           ctx.fillText(e.text,W/2,y+3);
+          if(e.sub){
+            ctx.font="6px 'Press Start 2P',monospace";
+            ctx.fillStyle='#706040';
+            ctx.fillText(e.sub,W/2,y+20);
+          }
           // underline
           ctx.fillStyle='#5a4020';
           ctx.fillRect(W*0.2,y+e.h-2,W*0.6,1);
