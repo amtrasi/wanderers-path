@@ -65,7 +65,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
   <button class="povbtn" style="margin-top:8px;border-color:#5a4020;color:#806020;" onclick="returnHome()">⌂ RETURN TO START</button>
 </div>
 <div id="press-overlay" style="display:flex;position:fixed;inset:0;background:rgba(10,6,0,0.96);flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:12px;" onclick="unlockAndStart()">
-  <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO BEGIN</p>
+  <p><span style="font-size:14px;">▸</span> PRESS ANY KEY TO CONTINUE</p>
   <div style="margin-top:16px;max-width:340px;text-align:center;color:#a08030;font-size:6px;line-height:2;letter-spacing:1px;padding:0 20px;">
     Explore the lands of Maplehaven. Talk to villagers, collect items, uncover secrets, and discover the mysteries of the kingdom...
   </div>
@@ -74,7 +74,6 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
   <div id="topbar">
     <span id="gametitle">✦ THE WANDERER'S PATH ✦</span>
     <div style="display:flex;gap:5px;">
-//      <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
       <button class="tbtn" id="sbtn" onclick="toggleSound()">♫ SOUND: OFF</button>
     </div>
   </div>
@@ -114,12 +113,10 @@ var MEOW_URL =BASE+'hazel-meow.m4a';
 var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL=BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var BARD_URL =BASE+'769807__soundsandrebounds__shakespeare-lover-and-his-lass-lute-and-wood-flute.wav';
-//var XI_KEY   ='sk_4607945fd32af1ec852fd5885d523ef43ac916a099fef0da';
-//var XI_VOICE ='JBFqnCBsd6RMkjVDRZzb';
 
 // ── State ──────────────────────────────────────────────────────────────
 var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
-var soundOn=false,voiceOn=true;
+var soundOn=false;
 var invPage_=0; // current inventory page (4 slots per page)
 var INV_PER_PAGE=4;
 
@@ -203,31 +200,6 @@ function unlockAndStart(){
   lobby=new Audio(LOBBY_URL);lobby.loop=true;lobby.volume=0.5;lobby.play().catch(function(){});
 }
 
-// // ── TTS ────────────────────────────────────────────────────────────────
-// var curAudio=null;
-// async function speak(text,onDuration){
-//   if(!voiceOn){if(onDuration)onDuration(0);return;}
-//   if(curAudio){curAudio.pause();curAudio=null;}
-//   try{
-//     var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
-//       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-//       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
-//     if(!r.ok){console.warn('ElevenLabs',r.status);if(onDuration)onDuration(0);return;}
-//     var blob=await r.blob();
-//     if(curAudio){curAudio.pause();curAudio=null;}
-//     var audio=new Audio(URL.createObjectURL(blob));
-//     curAudio=audio;
-//     var durFired=false;
-//     audio.addEventListener('loadedmetadata',function(){
-//       if(!durFired){durFired=true;if(onDuration)onDuration(audio.duration);}
-//     });
-//     setTimeout(function(){
-//       if(!durFired){durFired=true;if(onDuration)onDuration(2);}
-//     },800);
-//     audio.play().catch(function(e){console.warn('audio play',e);});
-//   }catch(e){console.warn('speak error',e);if(onDuration)onDuration(0);}
-// }
-// function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');}
 
 // ── Character ──────────────────────────────────────────────────────────
 var charX=160,charY=0.72,charScale=1,charState='idle',charDir=1;
@@ -573,10 +545,12 @@ var STORY={
     choices:[{text:"A) Search the clearing for the fox",next:'forest_fox'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Return to the village",next:'start'}]},
   forest_fox:{scene:'forest',lines:["A small fox steps into the clearing, its eyes bright as stars.","'Wanderer,' it says softly, 'you carry the glow of someone going somewhere.'","It drops a gleaming map fragment at your feet and vanishes into the trees."],revisit:["You wait in the clearing, but the fox does not return.","Only the rustling leaves and the distant sound of birdsong remain."],event:'loot',xpGain:25,itemGained:'map fragment',unlocks:'has_map',
     choices:[{text:"A) Rush to the village sage!",next:'village_sage_end'},{text:"B) Study the map — head to river",next:'river_treasure'},{text:"C) Rest in the meadow first",next:'meadow_arrive'}]},
-  village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He awards you with a warm scarf and a proud smile."],event:'loot',xpGain:30,itemGained:'warm scarf',
-    choices:[{text:"A) Continue the adventure",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Explore the meadow once more",next:'meadow_arrive'}]},
-  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","Ahead: the road, winding and wide, humming with possibility.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,
-    choices:[{text:"A) See the end credits ✦",next:'_credits_'},{text:"B) Explore a little more",next:'meadow_flowers'},{text:"C) Visit the village once more",next:'start'}]}
+  village_sage_end:{scene:'village',lines:["The sage's eyes go wide when you show him the map fragment.","'This is part of an ancient trail,' he breathes. 'You are truly on your way.'","He wraps a warm scarf around your shoulders with a proud smile.","'Keep it close — the road ahead is long, and the nights grow cold beyond these hills.'"],event:'loot',xpGain:30,itemGained:'warm scarf',
+    choices:[{text:"A) Follow the trail — head out",next:'epilogue'},{text:"B) Rest at the tavern first",next:'tavern_rest'},{text:"C) Say goodbye to the meadow",next:'epilogue_meadow'}]},
+  epilogue_meadow:{scene:'meadow',lines:["You take one last walk through the meadow.","The wildflowers nod in the breeze as if to say goodbye.","Hazel chases a butterfly, then trots back to your side, ready."],event:'none',xpGain:10,
+    choices:[{text:"A) It's time. Follow the trail.",next:'epilogue'}]},
+  epilogue:{scene:'meadow',lines:["You stand at the edge of the meadow as the sun dips golden.","Behind you: a village, a tavern, a river, a forest, and a fox.","You pull the scarf a little tighter and look down at the map.","The ancient trail winds north, beyond the hills, into the unknown.","Hazel looks up at you with bright eyes — and takes the first step forward.","Your story is just beginning, Wanderer. ✦"],event:'rest',hpChange:20,xpGain:50,epilogueEnd:true,
+    choices:[]}
 };
 
 // ── Inventory pagination ───────────────────────────────────────────────
@@ -631,7 +605,7 @@ function showSkipBtn(onSkip){
   window._skipCb=onSkip;
 }
 function skipNow(){
-  skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
+  skipTypewriter=true;
   var btn=document.querySelector('#cinn .cb');if(btn&&btn.textContent==='▶▶ SKIP')btn.remove();
   if(window._skipCb){window._skipCb();window._skipCb=null;}
 }
@@ -658,18 +632,10 @@ function typewriterLines(lines,cls,onDone,triggers){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-//    if(voiceOn){
-//      speak(line,function(dur){
-//        // Calculate typing speed so text finishes in sync with audio
-//        var mpc=dur>0?Math.max(18,Math.round((dur*1000)/line.length)):30;
-//        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
-//      });
-//    } else {
-      typewriterLog(line,cls,30,function(){setTimeout(next,120);});
-//    }
+    typewriterLog(line,cls,30,function(){setTimeout(next,120);});
   }
   showSkipBtn(function(){
-    skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
+    skipTypewriter=true;
     setTimeout(function(){
       var b=document.getElementById('log');
       while(i<lines.length){
@@ -748,6 +714,12 @@ function runNode(node){
         document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ WAKE UP & TRY AGAIN</button>';
       });return;
     }
+    // Auto-trigger credits at end of epilogue — no choices shown
+    if(node.epilogueEnd){
+      document.getElementById('cinn').innerHTML='<span id="stxt">✦ The End...</span>';
+      setTimeout(function(){showCredits();},2200);
+      return;
+    }
     // Split choices into new (unvisited) and revisit
     var allAllowed=node.choices.filter(function(c){
       return !c.requires||S.flags[c.requires];
@@ -818,112 +790,249 @@ function drawPixelGoldFrame(ctx, x, y, w, h) {
 }
 
 var creditsLobby=null;
+
+// ── Attributions data ─────────────────────────────────────────────────
+var ATTRIBUTIONS=[
+  {title:'✦ THE WANDERER\'S PATH ✦',role:'',author:'',license:'',isBig:true},
+  {title:'A game by amtrasi',role:'',author:'',license:'',isDim:true},
+  {title:'',spacer:true},
+  {title:'— SOUND & MUSIC —',role:'',author:'',license:'',isHeader:true},
+  {title:'',spacer:true},
+  {title:'Village Market Ambience',author:'Dan_AudioFile',license:'CC BY 4.0'},
+  {title:'Babbling Brook Loop',author:'minian89',license:'CC0'},
+  {title:'Pirate Tavern',author:'brunoboselli',license:'CC0'},
+  {title:'Forest Ambient Loop',author:'Imjeax',license:'CC BY 4.0'},
+  {title:'Windy Prairie Soundscape',author:'SilverIllusionist',license:'CC BY 4.0'},
+  {title:'Door Creak',author:'coosemek',license:'CC BY 3.0'},
+  {title:'FPS Footsteps Loop',author:'qubodup',license:'CC0'},
+  {title:'Medieval/Fantasy RPG Loop',author:'sonically_sound',license:'CC BY-NC 4.0'},
+  {title:'Lute and Wood Flute',author:'soundsandrebounds',license:'CC0'},
+  {title:'',spacer:true},
+  {title:'— VOICE NARRATION —',role:'',author:'',license:'',isHeader:true},
+  {title:'',spacer:true},
+  {title:'Powered by ElevenLabs',author:'',license:'',isDim:true},
+  {title:'',spacer:true},
+  {title:'— TYPOGRAPHY —',role:'',author:'',license:'',isHeader:true},
+  {title:'',spacer:true},
+  {title:'Press Start 2P',author:'CodeMan38',license:'SIL Open Font License'},
+  {title:'',spacer:true},
+  {title:'— SPECIAL THANKS —',role:'',author:'',license:'',isHeader:true},
+  {title:'',spacer:true},
+  {title:'Hazel 🐱',author:'',license:'',isDim:true},
+];
+
 function showCredits(){
-  // Stop all game audio
   stopAmbient(); stopBard(); stopSteps();
   if(lobby){lobby.pause();lobby=null;}
-  // Start lobby music
   creditsLobby=new Audio(LOBBY_URL);creditsLobby.loop=true;creditsLobby.volume=0;
   creditsLobby.play().catch(function(){});
   fadeVol(creditsLobby,0,0.5,1200);
 
   var screen=document.getElementById('credits-screen');
   screen.style.display='flex';
+
+  // Phase 1: scrolling attributions
+  // Phase 1: Hazel screen, then auto-transition to scrolling credits
+  runHazelScreen(function(){
+    runScrollingCredits(function(){
+      // Done — go to lobby
+      var screen=document.getElementById('credits-screen');
+      if(creditsLobby){fadeVol(creditsLobby,creditsLobby.volume,0,800,function(){creditsLobby.pause();creditsLobby=null;});}
+      screen.style.display='none';
+      screen.onclick=null;
+      showLobby();
+    });
+  });
+}
+
+function runScrollingCredits(onDone){
   var ccv=document.getElementById('credits-canvas');
-  var W=Math.min(window.innerWidth,600), H=Math.min(window.innerHeight,520);
+  var W=Math.min(window.innerWidth,600);
+  var H=Math.min(window.innerHeight,520);
+  ccv.width=W; ccv.height=H;
+  ccv.style.width=W+'px'; ccv.style.height=H+'px';
+  var ctx=ccv.getContext('2d');
+
+  // Build list of rendered lines with heights
+  var lineHeight=22, sectionGap=10;
+  var entries=[];
+  ATTRIBUTIONS.forEach(function(a){
+    if(a.spacer){entries.push({type:'spacer',h:sectionGap});return;}
+    if(a.isBig){entries.push({type:'big',text:a.title,h:32});return;}
+    if(a.isHeader){entries.push({type:'header',text:a.title,h:lineHeight+6});return;}
+    if(a.isDim){entries.push({type:'dim',text:a.title,h:lineHeight});return;}
+    entries.push({type:'attr',title:a.title,author:a.author,license:a.license,h:lineHeight*2+4});
+  });
+
+  var totalH=entries.reduce(function(s,e){return s+e.h;},0)+H;
+  var scrollY=H; // start below screen
+  var speed=0.6; // px per frame
+  var done=false;
+  var rafId=null;
+
+  // Starfield (static, drawn once to offscreen)
+  var stars=[];
+  for(var s=0;s<80;s++)stars.push([Math.random()*W,Math.random()*H]);
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // bg
+    var bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#070500');bg.addColorStop(1,'#120e04');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    // stars
+    ctx.fillStyle='rgba(255,220,100,0.4)';
+    stars.forEach(function(s){ctx.fillRect(s[0],s[1],1,1);});
+    // fade top and bottom
+    var fadeH=60;
+    var topFade=ctx.createLinearGradient(0,0,0,fadeH);
+    topFade.addColorStop(0,'rgba(7,5,0,1)');topFade.addColorStop(1,'rgba(7,5,0,0)');
+    ctx.fillStyle=topFade;ctx.fillRect(0,0,W,fadeH);
+    var botFade=ctx.createLinearGradient(0,H-fadeH,0,H);
+    botFade.addColorStop(0,'rgba(7,5,0,0)');botFade.addColorStop(1,'rgba(7,5,0,1)');
+    ctx.fillStyle=botFade;ctx.fillRect(0,H-fadeH,W,fadeH);
+
+    // Draw entries
+    var y=scrollY;
+    entries.forEach(function(e){
+      if(y+e.h>0 && y<H){
+        ctx.save();
+        ctx.textAlign='center';ctx.textBaseline='top';
+        if(e.type==='big'){
+          ctx.font="bold 11px 'Press Start 2P',monospace";
+          ctx.fillStyle='#e8c040';ctx.shadowColor='#e8c040';ctx.shadowBlur=14;
+          ctx.fillText(e.text,W/2,y);
+        } else if(e.type==='header'){
+          ctx.font="8px 'Press Start 2P',monospace";
+          ctx.fillStyle='#c8a040';
+          ctx.fillText(e.text,W/2,y+3);
+          // underline
+          ctx.fillStyle='#5a4020';
+          ctx.fillRect(W*0.2,y+e.h-2,W*0.6,1);
+        } else if(e.type==='dim'){
+          ctx.font="7px 'Press Start 2P',monospace";
+          ctx.fillStyle='#706040';
+          ctx.fillText(e.text,W/2,y+4);
+        } else if(e.type==='attr'){
+          ctx.font="7px 'Press Start 2P',monospace";
+          ctx.fillStyle='#c8a840';
+          ctx.fillText(e.title,W/2,y);
+          ctx.font="6px 'Press Start 2P',monospace";
+          ctx.fillStyle='#806030';
+          ctx.fillText(e.author+(e.license?' · '+e.license:''),W/2,y+lineHeight);
+        }
+        ctx.restore();
+      }
+      y+=e.h;
+    });
+
+    scrollY-=speed;
+    // Done when all content has scrolled past top
+    if(scrollY < -(totalH-H) && !done){
+      done=true;
+      cancelAnimationFrame(rafId);
+      setTimeout(onDone, 600);
+      return;
+    }
+    rafId=requestAnimationFrame(draw);
+  }
+
+  // Allow click/tap to skip to end of scrolling credits
+  var screen=document.getElementById('credits-screen');
+  screen.onclick=function(){
+    if(!done){done=true;cancelAnimationFrame(rafId);onDone();}
+  };
+  rafId=requestAnimationFrame(draw);
+}
+
+function runHazelScreen(onDone){
+  var ccv=document.getElementById('credits-canvas');
+  var W=Math.min(window.innerWidth,600);
+  var H=Math.min(window.innerHeight,520);
   ccv.width=W; ccv.height=H;
   ccv.style.width=W+'px'; ccv.style.height=H+'px';
   var ctx=ccv.getContext('2d');
   ctx.imageSmoothingEnabled=false;
+  var advanced=false;
+  function advance(){if(!advanced){advanced=true;if(onDone)onDone();}}
 
-  // Background gradient
+  // Click to skip ahead to scrolling credits
+  var screen=document.getElementById('credits-screen');
+  screen.onclick=function(){advance();};
+
+  // Draw background
   var bg=ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#0a0800'); bg.addColorStop(1,'#1a1008');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-
-  // Starfield
+  bg.addColorStop(0,'#0a0800');bg.addColorStop(1,'#1a1008');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  var stars=[];for(var s=0;s<60;s++)stars.push([Math.random()*W,Math.random()*H]);
   ctx.fillStyle='rgba(255,220,100,0.5)';
-  for(var s=0;s<60;s++){ctx.fillRect(Math.floor(Math.random()*W),Math.floor(Math.random()*H),1,1);}
+  stars.forEach(function(s){ctx.fillRect(s[0],s[1],1,1);});
 
-  // Title text
+  // Title
   ctx.fillStyle='#e8c040';
-  ctx.font="bold 11px 'Press Start 2P', monospace";
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.shadowColor='#e8c040'; ctx.shadowBlur=12;
-  ctx.fillText('✦ THE WANDERER\'S PATH ✦', W/2, 32);
+  ctx.font="bold 11px 'Press Start 2P',monospace";
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='#e8c040';ctx.shadowBlur=12;
+  ctx.fillText('✦ THE WANDERER\'S PATH ✦',W/2,32);
   ctx.shadowBlur=0;
 
-  // Image frame position
+  // Image + frame
   var imgSize=Math.round(Math.min(W,H)*0.42);
   var frameMargin=18;
   var frameW=imgSize+frameMargin*2, frameH=imgSize+frameMargin*2;
   var frameX=Math.round(W/2-frameW/2), frameY=54;
 
-  // Load and draw Hazel image inside frame
   var img=new Image();
   img.onload=function(){
-    // Draw frame first (behind inner content)
-    drawPixelGoldFrame(ctx, frameX, frameY, frameW, frameH);
-    // Clip to inner area and draw image
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
-    ctx.clip();
-    ctx.drawImage(img, frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
+    drawPixelGoldFrame(ctx,frameX,frameY,frameW,frameH);
+    ctx.save();ctx.beginPath();ctx.rect(frameX+frameMargin,frameY+frameMargin,imgSize,imgSize);ctx.clip();
+    ctx.drawImage(img,frameX+frameMargin,frameY+frameMargin,imgSize,imgSize);
     ctx.restore();
-    // Subtle inner shadow over image edges
-    var innerGrad=ctx.createRadialGradient(W/2,frameY+frameMargin+imgSize/2,imgSize*0.3,W/2,frameY+frameMargin+imgSize/2,imgSize*0.7);
-    innerGrad.addColorStop(0,'rgba(0,0,0,0)');
-    innerGrad.addColorStop(1,'rgba(0,0,0,0.3)');
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
-    ctx.clip();
-    ctx.fillStyle=innerGrad; ctx.fillRect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
-    ctx.restore();
-    // Draw credits text below frame — animated typewriter
-    drawCreditsText(ctx, W, H, frameY+frameH);
+    var ig=ctx.createRadialGradient(W/2,frameY+frameMargin+imgSize/2,imgSize*0.3,W/2,frameY+frameMargin+imgSize/2,imgSize*0.7);
+    ig.addColorStop(0,'rgba(0,0,0,0)');ig.addColorStop(1,'rgba(0,0,0,0.3)');
+    ctx.save();ctx.beginPath();ctx.rect(frameX+frameMargin,frameY+frameMargin,imgSize,imgSize);ctx.clip();
+    ctx.fillStyle=ig;ctx.fillRect(frameX+frameMargin,frameY+frameMargin,imgSize,imgSize);ctx.restore();
+    drawHazelText(ctx,W,H,frameY+frameH,advance);
   };
   img.onerror=function(){
-    // No image — still draw frame placeholder and proceed
-    drawPixelGoldFrame(ctx, frameX, frameY, frameW, frameH);
-    ctx.fillStyle='#2a1e08'; ctx.fillRect(frameX+frameMargin, frameY+frameMargin, imgSize, imgSize);
-    ctx.fillStyle='#e8c040'; ctx.font="14px serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('🐱', W/2, frameY+frameMargin+imgSize/2);
-    drawCreditsText(ctx, W, H, frameY+frameH);
+    drawPixelGoldFrame(ctx,frameX,frameY,frameW,frameH);
+    ctx.fillStyle='#2a1e08';ctx.fillRect(frameX+frameMargin,frameY+frameMargin,imgSize,imgSize);
+    ctx.fillStyle='#e8c040';ctx.font="14px serif";ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🐱',W/2,frameY+frameMargin+imgSize/2);
+    drawHazelText(ctx,W,H,frameY+frameH,advance);
   };
   img.src='assets/Hazel_end-credits.jpg';
-
-  // Click to dismiss
-  screen.onclick=function(){
-    if(creditsLobby){fadeVol(creditsLobby,creditsLobby.volume,0,600,function(){creditsLobby.pause();creditsLobby=null;});}
-    screen.style.display='none';
-    screen.onclick=null;
-    // Return to title state
-    document.getElementById('cinn').innerHTML='<button class="cb" style="flex:none" onclick="startGame()">▸ PLAY AGAIN</button>';
-  };
 }
 
-function drawCreditsText(ctx, W, H, belowY){
+function drawHazelText(ctx,W,H,belowY,onDone){
   var lines=[
-    {text:'Hazel would like to say:', size:8, color:'#a08030', delay:400},
-    {text:'Thank you for playing', size:10, color:'#e8c040', delay:900},
-    {text:'The Wanderer\'s Path!', size:10, color:'#e8c040', delay:1400},
-    {text:'♪  ♦  ♪', size:9, color:'#806020', delay:2000},
-    {text:'[ tap or click to continue ]', size:6, color:'#604810', delay:2600}
+    {text:'Hazel would like to say:',size:8,color:'#a08030',delay:400},
+    {text:'Thank you for playing',size:10,color:'#e8c040',delay:900},
+    {text:'The Wanderer\'s Path!',size:10,color:'#e8c040',delay:1400},
+    {text:'♪  ♦  ♪',size:9,color:'#806020',delay:2000},
   ];
   var yStart=belowY+18;
   lines.forEach(function(l,i){
     setTimeout(function(){
       ctx.save();
-      ctx.font=l.size+"px 'Press Start 2P', monospace";
-      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.font=l.size+"px 'Press Start 2P',monospace";
+      ctx.textAlign='center';ctx.textBaseline='top';
       ctx.fillStyle=l.color;
       if(l.color==='#e8c040'){ctx.shadowColor='#e8c040';ctx.shadowBlur=8;}
-      ctx.fillText(l.text, W/2, yStart+i*22);
-      ctx.shadowBlur=0; ctx.restore();
-    }, l.delay);
+      ctx.fillText(l.text,W/2,yStart+i*22);
+      ctx.shadowBlur=0;ctx.restore();
+    },l.delay);
   });
+  // Show scroll hint, then auto-advance after 6 seconds of reading time
+  setTimeout(function(){
+    ctx.save();
+    ctx.font="6px 'Press Start 2P',monospace";
+    ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillStyle='#604810';
+    ctx.fillText('[ continuing... ]',W/2,yStart+lines.length*22);
+    ctx.restore();
+  },2400);
+  setTimeout(function(){if(onDone)onDone();},7000);
 }
 
 
@@ -964,7 +1073,6 @@ function resumeGame(){
 function returnHome(){
   document.getElementById('pause-overlay').classList.remove('show');
   stopAmbient();stopBard();stopSteps();
-  if(curAudio){curAudio.pause();curAudio=null;}
   showLobby();
 }
 function showLobby(){
@@ -987,7 +1095,6 @@ function showLobby(){
 function startGame(){
   stopLobby(function(){
     skipTypewriter=false;window._skipCb=null;
-    if(curAudio){curAudio.pause();curAudio=null;}
     S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
     invPage_=0;catVisible=false;catHistory=[];catX=160;catY=Math.round(0.72*PH);
     charX=PW/2;charY=0.88;charScale=1;charState='idle';pendingCb=null;
