@@ -796,8 +796,7 @@ var ATTRIBUTIONS=[
   {title:'✦ THE WANDERER\'S PATH ✦',role:'',author:'',license:'',isBig:true},
   {title:'A game by amtrasi',role:'',author:'',license:'',isDim:true},
   {title:'',spacer:true},
-  {title:'— SOUND & MUSIC —',role:'',author:'',license:'',isHeader:true},
-  {title:'Courtesy of freesound.org',isDim:true},
+  {title:'— SOUND & MUSIC —',isHeader:true,sub:'Courtesy of freesound.org'},
   {title:'',spacer:true},
   {title:'Village Market Ambience',author:'Dan_AudioFile',license:'CC BY 4.0'},
   {title:'Babbling Brook Loop',author:'minian89',license:'CC0'},
@@ -856,7 +855,7 @@ function runScrollingCredits(onDone){
   ATTRIBUTIONS.forEach(function(a){
     if(a.spacer){entries.push({type:'spacer',h:sectionGap});return;}
     if(a.isBig){entries.push({type:'big',text:a.title,h:32});return;}
-    if(a.isHeader){entries.push({type:'header',text:a.title,h:lineHeight+6});return;}
+    if(a.isHeader){entries.push({type:'header',text:a.title,sub:a.sub||null,h:a.sub?lineHeight+22:lineHeight+6});return;}
     if(a.isDim){entries.push({type:'dim',text:a.title,h:lineHeight});return;}
     entries.push({type:'attr',title:a.title,author:a.author,license:a.license,h:lineHeight*2+4});
   });
@@ -903,6 +902,11 @@ function runScrollingCredits(onDone){
           ctx.font="8px 'Press Start 2P',monospace";
           ctx.fillStyle='#c8a040';
           ctx.fillText(e.text,W/2,y+3);
+          if(e.sub){
+          ctx.font="6px 'Press Start 2P',monospace";
+          ctx.fillStyle='#706040';
+          ctx.fillText(e.sub,W/2,y+20);
+          }
           // underline
           ctx.fillStyle='#5a4020';
           ctx.fillRect(W*0.2,y+e.h-2,W*0.6,1);
