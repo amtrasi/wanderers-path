@@ -151,7 +151,7 @@ function stopLobby(cb){
 var bard=null;
 function startBard(){
   if(bard||!soundOn)return;
-  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.12,1500);
+  bard=new Audio(BARD_URL);bard.loop=true;bard.volume=0;bard.play().catch(function(){});fadeVol(bard,0,0.08,1500);
 }
 function stopBard(){if(!bard)return;var b=bard;bard=null;fadeVol(b,b.volume,0,1000,function(){b.pause();b.src='';});}
 function tavernEnter(){
