@@ -74,7 +74,7 @@ body{background:#1a1208;display:flex;flex-direction:column;align-items:center;ju
   <div id="topbar">
     <span id="gametitle">✦ THE WANDERER'S PATH ✦</span>
     <div style="display:flex;gap:5px;">
-      <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
+//      <button class="tbtn" id="vbtn" onclick="toggleVoice()">♪ VOICE: ON</button>
       <button class="tbtn" id="sbtn" onclick="toggleSound()">♫ SOUND: OFF</button>
     </div>
   </div>
@@ -114,8 +114,8 @@ var MEOW_URL =BASE+'hazel-meow.m4a';
 var LOBBY_URL=BASE+'649132__sonically_sound__medievalfantasy-rpg-loop-mix-at-32-secs-to-extendrepeat.wav';
 var STEPS_URL=BASE+'816019__qubodup__fps-footsteps-loop.wav';
 var BARD_URL =BASE+'769807__soundsandrebounds__shakespeare-lover-and-his-lass-lute-and-wood-flute.wav';
-var XI_KEY   ='sk_4607945fd32af1ec852fd5885d523ef43ac916a099fef0da';
-var XI_VOICE ='JBFqnCBsd6RMkjVDRZzb';
+//var XI_KEY   ='sk_4607945fd32af1ec852fd5885d523ef43ac916a099fef0da';
+//var XI_VOICE ='JBFqnCBsd6RMkjVDRZzb';
 
 // ── State ──────────────────────────────────────────────────────────────
 var S={hp:20,maxHp:20,xp:0,gold:5,inv:[],scene:'intro',flags:{},visited:{}};
@@ -203,31 +203,31 @@ function unlockAndStart(){
   lobby=new Audio(LOBBY_URL);lobby.loop=true;lobby.volume=0.5;lobby.play().catch(function(){});
 }
 
-// ── TTS ────────────────────────────────────────────────────────────────
-var curAudio=null;
-async function speak(text,onDuration){
-  if(!voiceOn){if(onDuration)onDuration(0);return;}
-  if(curAudio){curAudio.pause();curAudio=null;}
-  try{
-    var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
-      headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
-    if(!r.ok){console.warn('ElevenLabs',r.status);if(onDuration)onDuration(0);return;}
-    var blob=await r.blob();
-    if(curAudio){curAudio.pause();curAudio=null;}
-    var audio=new Audio(URL.createObjectURL(blob));
-    curAudio=audio;
-    var durFired=false;
-    audio.addEventListener('loadedmetadata',function(){
-      if(!durFired){durFired=true;if(onDuration)onDuration(audio.duration);}
-    });
-    setTimeout(function(){
-      if(!durFired){durFired=true;if(onDuration)onDuration(2);}
-    },800);
-    audio.play().catch(function(e){console.warn('audio play',e);});
-  }catch(e){console.warn('speak error',e);if(onDuration)onDuration(0);}
-}
-function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');}
+// // ── TTS ────────────────────────────────────────────────────────────────
+// var curAudio=null;
+// async function speak(text,onDuration){
+//   if(!voiceOn){if(onDuration)onDuration(0);return;}
+//   if(curAudio){curAudio.pause();curAudio=null;}
+//   try{
+//     var r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+XI_VOICE,{method:'POST',
+//       headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
+//       body:JSON.stringify({text:text,model_id:'eleven_turbo_v2',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.55,use_speaker_boost:true}})});
+//     if(!r.ok){console.warn('ElevenLabs',r.status);if(onDuration)onDuration(0);return;}
+//     var blob=await r.blob();
+//     if(curAudio){curAudio.pause();curAudio=null;}
+//     var audio=new Audio(URL.createObjectURL(blob));
+//     curAudio=audio;
+//     var durFired=false;
+//     audio.addEventListener('loadedmetadata',function(){
+//       if(!durFired){durFired=true;if(onDuration)onDuration(audio.duration);}
+//     });
+//     setTimeout(function(){
+//       if(!durFired){durFired=true;if(onDuration)onDuration(2);}
+//     },800);
+//     audio.play().catch(function(e){console.warn('audio play',e);});
+//   }catch(e){console.warn('speak error',e);if(onDuration)onDuration(0);}
+// }
+// function toggleVoice(){voiceOn=!voiceOn;if(!voiceOn&&curAudio){curAudio.pause();curAudio=null;}document.getElementById('vbtn').textContent='♪ VOICE: '+(voiceOn?'ON':'OFF');}
 
 // ── Character ──────────────────────────────────────────────────────────
 var charX=160,charY=0.72,charScale=1,charState='idle',charDir=1;
@@ -658,15 +658,15 @@ function typewriterLines(lines,cls,onDone,triggers){
     if(i>=lines.length){hideSkipBtn();if(onDone)onDone();return;}
     var idx=i,line=lines[i++];
     if(triggers[idx])setTimeout(triggers[idx],400);
-    if(voiceOn){
-      speak(line,function(dur){
-        // Calculate typing speed so text finishes in sync with audio
-        var mpc=dur>0?Math.max(18,Math.round((dur*1000)/line.length)):30;
-        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
-      });
-    } else {
+//    if(voiceOn){
+//      speak(line,function(dur){
+//        // Calculate typing speed so text finishes in sync with audio
+//        var mpc=dur>0?Math.max(18,Math.round((dur*1000)/line.length)):30;
+//        typewriterLog(line,cls,mpc,function(){setTimeout(next,150);});
+//      });
+//    } else {
       typewriterLog(line,cls,30,function(){setTimeout(next,120);});
-    }
+//    }
   }
   showSkipBtn(function(){
     skipTypewriter=true;if(curAudio){curAudio.pause();curAudio=null;}
