@@ -189,7 +189,7 @@ function sndBird(){
 function playCatMeow(){
   if(!soundOn)return;
   try{var ctx=ac(),audio=new Audio(MEOW_URL);var src=ctx.createMediaElementSource(audio);var gain=ctx.createGain();gain.gain.value=0.4;src.connect(gain);gain.connect(ctx.destination);audio.play().catch(function(){});}
-  catch(e){var a=new Audio(MEOW_URL);a.volume=0.3;a.play().catch(function(){});}
+  catch(e){var a=new Audio(MEOW_URL);a.volume=0.5;a.play().catch(function(){});}
 }
 function toggleSound(){
   soundOn=!soundOn;document.getElementById('sbtn').textContent='♫ SOUND: '+(soundOn?'ON':'OFF');
