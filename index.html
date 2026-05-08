@@ -166,7 +166,7 @@ function tavernEnter(){
   setTimeout(function(){fadeVol(a,0,AVOL.tavern,1200);startBard();},1400);amb=a;
 }
 var steps_=null;
-function startSteps(){if(steps_||!soundOn)return;steps_=new Audio(STEPS_URL);steps_.loop=true;steps_.volume=0.5;steps_.play().catch(function(){});}
+function startSteps(){if(steps_||!soundOn)return;steps_=new Audio(STEPS_URL);steps_.loop=true;steps_.volume=0.3;steps_.play().catch(function(){});}
 function stopSteps(){if(steps_){steps_.pause();steps_.currentTime=0;steps_=null;}}
 function tn(f,d,delay,vol,type){
   if(!soundOn)return;delay=delay||0;vol=vol||0.06;type=type||'sine';
@@ -1009,7 +1009,7 @@ var STORY={
     choices:[{text:"A) Ask the barkeep for news",next:'tavern_news'},{text:"B) Head to the river",next:'river_arrive'},{text:"C) Go to the forest",next:'forest_arrive'}]},
   meadow_arrive:{scene:'meadow',
     lines:["The meadow stretches out in a patchwork of wildflowers.","Birds are singing somewhere above the tall grass.","A warm breeze carries the scent of clover and sunshine."],
-    revisit:["The meadow is just as lovely as you remember.","The cat pounces at a butterfly, then looks back at you proudly."],
+    revisit:["The meadow is just as lovely as you remember.","Hazel pounces at a butterfly, then looks back at you proudly."],
     event:'none',
     choices:[{text:"A) Pick some flowers",next:'meadow_flowers'},{text:"B) Follow the path to the river",next:'river_arrive'},{text:"C) Chase that rabbit!",next:'meadow_rabbit'}],
     revisitChoices:[{text:"A) Follow the path to the river",next:'river_arrive'},{text:"B) Head into the forest",next:'forest_arrive'},{text:"C) Return to the village",next:'start'}]},
@@ -1029,7 +1029,7 @@ var STORY={
     choices:[{text:"A) Cross to the forest",next:'forest_arrive'},{text:"B) Head back to the village",next:'start'},{text:"C) Go to the meadow",next:'meadow_arrive'}]},
   forest_arrive:{scene:'forest',
     lines:["The forest is cool and dappled with shifting light.","Ancient trees tower above you, roots knotted like old friends.","Something rustles in the undergrowth nearby."],
-    revisit:["The forest hushes as you enter once more.","The cat's ears prick up at every sound."],
+    revisit:["The forest hushes as you enter once more.","Hazel's ears prick up at every sound."],
     event:'none',
     choices:[{text:"A) Search for the fox in the clearing",next:'forest_fox'},{text:"B) Investigate the rustling",next:'forest_rustling'},{text:"C) Search for mushrooms",next:'forest_mushrooms'}],
     revisitChoices:[{text:"A) Search for the fox in the clearing",next:'forest_fox'},{text:"B) Return to the village",next:'start'},{text:"C) Head to the river",next:'river_arrive'}]},
